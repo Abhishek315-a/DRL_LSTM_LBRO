@@ -359,15 +359,15 @@ This encourages both efficient offloading and load balancing.
 # How to Run
 ## 1. Create Package Init Files:
 ```text
-- touch data/__init__.py
-- touch simulator/__init__.py
-- touch models/__init__.py
-- touch agents/__init__.py
-- touch results/__init__.py
+touch data/__init__.py
+touch simulator/__init__.py
+touch models/__init__.py
+touch agents/__init__.py
+touch results/__init__.py
 ```
 ## 2. Generate Data
 ```
-- python3 -m data.data_generator
+python3 -m data.data_generator
 ```
 
 ## Outputs:
