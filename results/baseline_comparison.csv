@@ -1,0 +1,5 @@
+policy,drop_rate_mean,drop_rate_std,avg_lat_mean,avg_lat_std,avg_eng_mean,avg_eng_std,imbalance_mean,imbalance_std,reward_mean,reward_std
+DRL-LSTM-LBRO,0.5299,0.0313,0.4014,0.0113,1.8791,0.0375,0.3353,0.0304,-701.3239,38.9785
+Round-Robin,0.5311,0.0305,0.3766,0.003,1.9456,0.037,0.0024,0.0,-682.8663,37.8272
+Random,0.6488,0.0321,0.791,0.0525,1.6252,0.0526,0.0263,0.012,-866.9833,42.1335
+Greedy-Best,0.431,0.0356,0.2176,0.003,1.9529,0.0362,0.4714,0.0,-595.9322,42.9206
