@@ -7,7 +7,7 @@
 
 # ── IoT Layer ─────────────────────────────────────────────────
 NUM_DEVICES          = 50
-TASK_ARRIVAL_PROB    = 0.3
+TASK_ARRIVAL_PROB    = 0.05
 TASK_SIZE_MIN        = 2.0          # Mbits
 TASK_SIZE_MAX        = 5.0          # Mbits
 PROCESSING_DENSITY   = 0.297        # GCycles/Mbit  (AICDQN Eq. 2)
@@ -15,7 +15,7 @@ CPU_DEMAND_MIN       = 1000.0       # MIPS
 CPU_DEMAND_MAX       = 3000.0       # MIPS
 RAM_DEMAND_MIN       = 256.0        # MB
 RAM_DEMAND_MAX       = 1280.0       # MB
-TASK_DEADLINE_SLOTS  = 10           # slots before drop
+TASK_DEADLINE_SLOTS  = 20           # slots before drop
 
 TASK_PRIORITY_HIGH       = 1.0
 TASK_PRIORITY_LOW        = 0.0
@@ -71,10 +71,8 @@ NUM_EPISODES     = 1000   # increased from 500
 
 # ── Reward Weights ────────────────────────────────────────────
 W_LATENCY    = 2.0    # increased — latency is key metric
-W_ENERGY     = 0.5
 W_DROP       = 5.0    # increased — dropping tasks is very bad
-W_ADAPT_RATE = 0.01
-
+W_IMBALANCE = 0.3   
 LATENCY_MAX_S      = 3.0
 ENERGY_MAX_J       = 5.0
 CLOUD_LATENCY_NORM = 0.25
@@ -106,7 +104,7 @@ DDQN_EPSILON       = 1.0
 DDQN_EPSILON_MIN   = 0.01
 DDQN_EPSILON_DECAY = 0.9998   # ← FIXED: was 0.995 (hit min in 5 eps)
 DDQN_BATCH_SIZE    = 64
-DDQN_MEMORY_SIZE   = 10_000
+DDQN_MEMORY_SIZE   = 50_000
 DDQN_TARGET_UPDATE = 10
 DDQN_HIDDEN_UNITS  = [256, 128]
 
