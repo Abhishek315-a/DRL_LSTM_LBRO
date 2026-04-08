@@ -18,7 +18,8 @@ from simulator.config import (
     CPU_CRITICAL_THRESH, RAM_CRITICAL_THRESH,
     P_ACTIVE_W, P_IDLE_W, P_SLEEP_W, P_TX_W,
     ENERGY_ACTIVE, ENERGY_IDLE, ENERGY_SLEEP,
-    TIME_SLOT_S, CPU_DEMAND_MIN, CPU_DEMAND_MAX
+    TIME_SLOT_S, CPU_DEMAND_MIN, CPU_DEMAND_MAX,
+    RAM_DEMAND_MIN, RAM_DEMAND_MAX
 )
 
 
@@ -60,7 +61,7 @@ class Cloudlet:
         # _cpu_load / _ram_load are EMA-smoothed and decay via tick().
         self._cpu_load   = 0.0
         self._ram_load   = 0.0
-        self._load_decay = 0.85   # load fades 15% per slot
+        self._load_decay = 0.93   # calibrated: SS load = cpu_frac/0.07, realistic buildup
 
         # ── Per-cloudlet arrival rate EMA ─────────────────────
         self._lam_ema   = 1.0
@@ -87,7 +88,8 @@ class Cloudlet:
 
     @property
     def queue_util(self) -> float:
-        return self.queue_len / max(self.q_max, 1)
+        """EMA CPU load used as queue utilisation proxy [0, 1]."""
+        return self._cpu_load
 
     @property
     def is_critical(self) -> bool:
@@ -100,12 +102,17 @@ class Cloudlet:
     def tick(self):
         """
         Called once per time slot from environment.step().
-        Decays EMA load to simulate tasks completing over time.
-        Also decays queue length gradually.
+        Drains queue at the actual service rate (c * mu * dt tasks/slot).
+        EMA loads decay to represent completed tasks fading from the signal.
         """
-        self._cpu_load  *= self._load_decay
-        self._ram_load  *= self._load_decay
-        self.queue_len   = max(0, int(self.queue_len * self._load_decay))
+        self._cpu_load *= self._load_decay
+        self._ram_load *= self._load_decay
+        avg_cpu = (CPU_DEMAND_MIN + CPU_DEMAND_MAX) / 2.0
+        avg_ram = (RAM_DEMAND_MIN + RAM_DEMAND_MAX) / 2.0
+        drain   = max(1, round(self.c * (self.mips / avg_cpu) * TIME_SLOT_S))
+        self.queue_len = max(0, self.queue_len - drain)
+        self.cpu_used  = max(0.0, self.cpu_used  - drain * avg_cpu)
+        self.ram_used  = max(0.0, self.ram_used  - drain * avg_ram)
         self._update_energy_state()
 
 
@@ -152,8 +159,11 @@ class Cloudlet:
     # ── Capacity check ────────────────────────────────────────
 
     def can_accept(self, task) -> bool:
-        return (self.queue_len < self.q_max and
-                self.ram_used + task.ram_demand_mb <= self.ram_total)
+        """Drop at 75% EMA load — prevents hot-spotting, forces realistic congestion."""
+        cpu_fraction = task.cpu_demand_mips / max(float(self.mips * self.c), 1.0)
+        ram_fraction = task.ram_demand_mb   / max(self.ram_total, 1.0)
+        return (self._cpu_load + cpu_fraction <= 0.62 and
+                self._ram_load + ram_fraction <= 0.62)
 
 
     # ── Execute task ──────────────────────────────────────────
@@ -188,7 +198,7 @@ class Cloudlet:
         t_exec  = task.cpu_cycles / (self.mips * 1e6)          # AICDQN Eq. 3
         t_queue = self._queuing_delay()                          # AICDQN Eq. 9
         t_tx    = (task.size_mbits * 1e6) / (EDGE_LAN_MBPS * 1e6)  # LAN
-        t_prop  = self.prop_delay
+        t_prop  = self.prop_delay 
 
         total_latency = t_exec + t_queue + t_tx + t_prop
 
@@ -199,12 +209,6 @@ class Cloudlet:
         e_compute = power_map[self.energy_state] * t_exec
         e_tx      = P_TX_W * t_tx
         energy    = e_compute + e_tx
-
-        # ── Release instantaneous alloc (EMA load remains) ────
-        self.queue_len = max(0, self.queue_len - 1)
-        self.cpu_used  = max(0.0, self.cpu_used - task.cpu_demand_mips)
-        self.ram_used  = max(0.0, self.ram_used - task.ram_demand_mb)
-        self._update_energy_state()
 
         # ── Fill task fields ──────────────────────────────────
         task.assigned_node = self.node_id

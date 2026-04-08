@@ -284,8 +284,10 @@ class RFTaskClassifier:
         print(f"\n  Classification Report:")
         print(classification_report(
             y_test, y_pred_test,
+            labels       = list(range(len(self.class_names))),
             target_names = self.class_names,
-            digits       = 4
+            digits       = 4,
+            zero_division= 0
         ))
 
         print(f"  Confusion Matrix:")

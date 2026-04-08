@@ -4,11 +4,14 @@
 # Dynamic priority score φ(i,t)    (AICDQN Eq. 4)
 # =============================================================
 
+import os
+import ast
 import numpy as np
+import pandas as pd
 from dataclasses import dataclass
 from typing import Optional
 
-from simulator.config import (
+from simulator.config import (GOOGLE_TRACE_PATH,
     NUM_DEVICES, TASK_ARRIVAL_PROB,
     TASK_SIZE_MIN, TASK_SIZE_MAX,
     PROCESSING_DENSITY,
@@ -20,6 +23,45 @@ from simulator.config import (
     TASK_PRIORITY_HIGH_RATIO,
     THETA_1, THETA_2, THETA_3
 )
+
+
+# =============================================================
+# Google Cluster Trace loader  (cached at class level)
+# =============================================================
+
+def _parse_google_trace(path: str):
+    """
+    Parse Google Borg cluster trace (2019) to extract CPU and RAM
+    request distributions. Returns two numpy arrays scaled to the
+    simulator's MIPS and MB ranges.
+
+    Google fractions are normalised to machine capacity:
+      - CPU:  1.0 ≈ 96,000 MIPS  (32 vCPUs × 3 GHz × 1000)
+      - RAM:  1.0 = 131,072 MB   (128 GB)
+    """
+    if not os.path.exists(path):
+        return None, None
+    print(f"  Loading Google cluster trace → {path} ...")
+    df = pd.read_csv(path, usecols=["resource_request"], nrows=300_000)
+    cpu_vals, ram_vals = [], []
+    for val in df["resource_request"].dropna():
+        try:
+            d = ast.literal_eval(val)
+            c = d.get("cpus",   None)
+            m = d.get("memory", None)
+            if c and m and c > 0 and m > 0:
+                cpu_vals.append(c)
+                ram_vals.append(m)
+        except Exception:
+            continue
+    if len(cpu_vals) < 1000:
+        return None, None
+    cpu_arr = np.clip(np.array(cpu_vals) * 96_000,  CPU_DEMAND_MIN, CPU_DEMAND_MAX)
+    ram_arr = np.clip(np.array(ram_vals) * 131_072, RAM_DEMAND_MIN, RAM_DEMAND_MAX)
+    print(f"  ✅ Trace parsed: {len(cpu_arr):,} tasks  "
+          f"CPU [{cpu_arr.min():.0f}–{cpu_arr.max():.0f}] MIPS  "
+          f"RAM [{ram_arr.min():.0f}–{ram_arr.max():.0f}] MB")
+    return cpu_arr.astype(np.float32), ram_arr.astype(np.float32)
 
 
 # =============================================================
@@ -179,17 +221,24 @@ class IoTTaskGenerator:
 
     Each of NUM_DEVICES devices independently generates a task
     with probability TASK_ARRIVAL_PROB per time slot.
-    This is a Bernoulli process — approximation of Poisson arrival.
-
-    Average arrivals per slot = NUM_DEVICES × TASK_ARRIVAL_PROB
-                              = 50 × 0.3 = 15 tasks/slot
-
-    Task type is heuristically labelled here using CPU/RAM ratio.
-    The RF classifier (Step 3) will replace these labels with
-    learned predictions based on the trained model.
+    Task parameters (CPU demand, RAM demand) are sampled from the
+    empirical distribution of the Google Borg cluster trace (2019).
+    Falls back to uniform sampling if the trace file is not found.
     """
 
+    _trace_cpu: np.ndarray = None   # class-level cache — loaded once
+    _trace_ram: np.ndarray = None
+    _trace_loaded: bool    = False
+
+    @classmethod
+    def _ensure_trace(cls):
+        if cls._trace_loaded:
+            return
+        cls._trace_loaded = True
+        cls._trace_cpu, cls._trace_ram = _parse_google_trace(GOOGLE_TRACE_PATH)
+
     def __init__(self, seed: int = 42):
+        self.__class__._ensure_trace()
         self.rng           = np.random.default_rng(seed)
         self._task_counter = 0
 
@@ -210,27 +259,32 @@ class IoTTaskGenerator:
 
     def _make_task(self, device_id: int, current_slot: int) -> Task:
         """
-        Sample task parameters uniformly from configured ranges.
-        Assign heuristic task type based on CPU/RAM dominance.
+        Sample task parameters from Google Borg cluster trace distribution
+        (or uniform fallback if trace unavailable).
         """
         self._task_counter += 1
 
-        # Sample parameters
-        cpu   = float(self.rng.uniform(CPU_DEMAND_MIN,  CPU_DEMAND_MAX))
-        ram   = float(self.rng.uniform(RAM_DEMAND_MIN,  RAM_DEMAND_MAX))
-        size  = float(self.rng.uniform(TASK_SIZE_MIN,   TASK_SIZE_MAX))
+        # CPU and RAM from Google trace (empirical) or uniform fallback
+        if self.__class__._trace_cpu is not None:
+            idx = int(self.rng.integers(0, len(self.__class__._trace_cpu)))
+            cpu = float(self.__class__._trace_cpu[idx])
+            ram = float(self.__class__._trace_ram[idx])
+        else:
+            cpu = float(self.rng.uniform(CPU_DEMAND_MIN, CPU_DEMAND_MAX))
+            ram = float(self.rng.uniform(RAM_DEMAND_MIN, RAM_DEMAND_MAX))
+
+        size  = float(self.rng.uniform(TASK_SIZE_MIN, TASK_SIZE_MAX))
         pri   = (TASK_PRIORITY_HIGH
                  if self.rng.random() < TASK_PRIORITY_HIGH_RATIO
                  else TASK_PRIORITY_LOW)
 
-        # Heuristic type label
-        # RF classifier (Step 3) will replace this with learned model
+        # Heuristic type label (internal only — not used in DDQN state)
         cpu_norm = (cpu - CPU_DEMAND_MIN) / (CPU_DEMAND_MAX - CPU_DEMAND_MIN)
         ram_norm = (ram - RAM_DEMAND_MIN) / (RAM_DEMAND_MAX - RAM_DEMAND_MIN)
 
-        if   cpu_norm > 0.65 : ttype = TASK_CPU   # CPU heavy
-        elif ram_norm > 0.65 : ttype = TASK_MEM   # RAM heavy
-        else                 : ttype = TASK_BAL   # balanced
+        if   cpu_norm > 0.65 : ttype = TASK_CPU
+        elif ram_norm > 0.65 : ttype = TASK_MEM
+        else                 : ttype = TASK_BAL
 
         return Task(
             task_id         = self._task_counter,

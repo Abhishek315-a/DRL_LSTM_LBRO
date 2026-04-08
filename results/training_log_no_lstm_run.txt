@@ -1,0 +1,119 @@
+============================================================
+  DRL-LSTM-LBRO  —  Step 6: Training  [no_lstm]
+============================================================
+
+  Loading pretrained models...
+  ⬜ LSTM predictors(DISABLED)
+  Loading Google cluster trace → data/google_cluster_2019/borg_traces_data.csv ...
+  ✅ Trace parsed: 294,725 tasks  CPU [1000–3000] MIPS  RAM [256–1280] MB
+  ✅ LBRO Broker initialised
+  ✅ DDQN Agent  initialised  (state=23, actions=4)
+
+  Starting training — 500 episodes...
+  ────────────────────────────────────────────────────────
+     EP    Reward   DropRate    AvgLat    AvgEng      Loss       ε
+  ────────────────────────────────────────────────────────
+      1   -266.32     14.0%    0.2839    1.6511   0.00000  1.0000  [0s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     10   -316.82     17.5%    0.3752    1.7715   0.47705  0.8187  [5s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     20   -244.73     12.5%    0.3651    1.7600   0.71570  0.5488  [12s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     30   -200.78      9.5%    0.3521    1.8373   0.70122  0.3678  [20s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     40   -171.21      7.5%    0.3428    1.8443   0.72035  0.2466  [28s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     50   -159.57      6.0%    0.3241    1.8701   0.72370  0.1653  [37s]
+  ✅ DDQN saved → models/ddqn_online.keras
+                  models/ddqn_target.keras
+  ────────────────────────────────────────────────────────
+  Checkpoint saved at episode 50
+  ────────────────────────────────────────────────────────
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     60   -131.07      4.5%    0.3373    1.9035   0.72968  0.1108  [46s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     70   -125.97      4.0%    0.3204    1.8664   0.72420  0.0743  [55s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     80   -103.76      2.5%    0.3337    1.9523   0.72342  0.0498  [63s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+     90    -83.69      1.5%    0.3129    1.9396   0.72216  0.0334  [72s]
+    100    -88.55      1.5%    0.3203    1.9437   0.71685  0.0224  [81s]
+  ✅ DDQN saved → models/ddqn_online.keras
+                  models/ddqn_target.keras
+  ────────────────────────────────────────────────────────
+  Checkpoint saved at episode 100
+  ────────────────────────────────────────────────────────
+    110    -89.10      2.0%    0.3268    1.9984   0.71248  0.0150  [90s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+    120    -91.38      1.5%    0.3079    1.9560   0.71178  0.0100  [99s]
+    130    -78.03      1.0%    0.3118    1.8588   0.70657  0.0100  [108s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+    140    -75.56      0.5%    0.3140    1.9565   0.70093  0.0100  [117s]
+    150    -83.95      1.0%    0.3156    2.0097   0.69576  0.0100  [125s]
+  ✅ DDQN saved → models/ddqn_online.keras
+                  models/ddqn_target.keras
+  ────────────────────────────────────────────────────────
+  Checkpoint saved at episode 150
+  ────────────────────────────────────────────────────────
+    160    -78.96      1.0%    0.3183    1.9677   0.68968  0.0100  [134s]
+    170    -72.94      0.5%    0.2988    1.9029   0.68377  0.0100  [143s]
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+    180    -81.98      1.0%    0.3171    1.9358   0.67897  0.0100  [152s]
+    190    -74.61      0.5%    0.3145    1.8981   0.67612  0.0100  [161s]
+    200    -75.65      0.5%    0.3113    1.8752   0.67057  0.0100  [169s]
+  ✅ DDQN saved → models/ddqn_online.keras
+                  models/ddqn_target.keras
+  ────────────────────────────────────────────────────────
+  Checkpoint saved at episode 200
+  ────────────────────────────────────────────────────────
+  ✅ DDQN saved → models/ddqn_best_no_lstm_online.keras
+                  models/ddqn_best_no_lstm_target.keras
+    210    -69.65      0.5%    0.3077    1.9291   0.66826  0.0100  [177s]
+    220    -73.09      0.5%    0.3215    1.9288   0.66366  0.0100  [185s]
+    230    -80.37      1.0%    0.3099    1.9704   0.66036  0.0100  [193s]
+    240    -74.78      0.5%    0.3317    1.9655   0.65714  0.0100  [201s]
+    250    -73.61      0.5%    0.3195    1.9575   0.65446  0.0100  [209s]
+  ✅ DDQN saved → models/ddqn_online.keras
+                  models/ddqn_target.keras
+  ────────────────────────────────────────────────────────
+  Checkpoint saved at episode 250
+  ────────────────────────────────────────────────────────
+    260    -82.15      1.0%    0.3160    1.8953   0.65274  0.0100  [218s]

@@ -15,8 +15,9 @@ from simulator.config import (
     CPU_DEMAND_MIN, CPU_DEMAND_MAX,
     RAM_DEMAND_MIN, RAM_DEMAND_MAX,
     TASK_DEADLINE_SLOTS,
-    W_LATENCY, W_DROP, W_IMBALANCE,
+    W_LATENCY, W_DROP, W_IMBALANCE, W_OVERLOAD,
     LATENCY_MAX_S, CLOUD_LATENCY_NORM,
+    TASK_CPU, TASK_MEM, TASK_BAL,
 )
 from simulator.cloudlet import Cloudlet
 from simulator.cloud    import CloudNode
@@ -37,16 +38,22 @@ class LBROEnvironment:
         self._ram_hist     = np.zeros((NUM_CLOUDLETS, LSTM_WINDOW), dtype=np.float32)
         self.lstm_cpu_pred = np.zeros(NUM_CLOUDLETS, dtype=np.float32)
         self.lstm_ram_pred = np.zeros(NUM_CLOUDLETS, dtype=np.float32)
+        self._lstm_predictors = None   # set via attach_lstm_predictors()
 
-        self.w_lat  = float(W_LATENCY)
-        self.w_drop = float(W_DROP)
-        self.w_imb  = float(W_IMBALANCE) 
+        self.w_lat     = float(W_LATENCY)
+        self.w_drop    = float(W_DROP)
+        self.w_imb     = float(W_IMBALANCE)
+        self.w_overload = float(W_OVERLOAD)
 
         self.current_step = 0
         self.current_task = None
         self._task_buffer = deque()
         self._ep_stats    = self._blank_stats()
 
+
+    def attach_lstm_predictors(self, predictors: list):
+        """Call once after env creation to enable cold-start LSTM priming."""
+        self._lstm_predictors = predictors
 
     def reset(self) -> np.ndarray:
         for c in self.cloudlets:
@@ -59,13 +66,22 @@ class LBROEnvironment:
         self.lstm_cpu_pred = np.zeros(NUM_CLOUDLETS, dtype=np.float32)
         self.lstm_ram_pred = np.zeros(NUM_CLOUDLETS, dtype=np.float32)
 
-        self.w_lat  = float(W_LATENCY)
-        self.w_drop = float(W_DROP)
-        self.w_imb  = float(W_IMBALANCE)  
+        self.w_lat      = float(W_LATENCY)
+        self.w_drop     = float(W_DROP)
+        self.w_imb      = float(W_IMBALANCE)
+        self.w_overload = float(W_OVERLOAD)
 
         self.current_step = 0
         self._task_buffer = deque()
         self._ep_stats    = self._blank_stats()
+
+        # Fix: prime LSTM predictions at episode start instead of using zeros
+        if self._lstm_predictors is not None:
+            for cid, predictor in enumerate(self._lstm_predictors):
+                history = self.get_lstm_input(cid)   # all-zero window is fine here
+                cpu_p, ram_p = predictor.predict(history)
+                self.lstm_cpu_pred[cid] = cpu_p
+                self.lstm_ram_pred[cid] = ram_p
 
         self.current_task = self._next_task()
         return self._build_state(self.current_task)
@@ -100,11 +116,16 @@ class LBROEnvironment:
         self._update_history()
 
         self._ep_stats["tasks"]   += 1
-        self._ep_stats["latency"] += latency
         self._ep_stats["energy"]  += energy
         self._ep_stats["actions"][action] += 1
         if dropped or deadline_violated:
             self._ep_stats["dropped"] += 1
+        else:
+            self._ep_stats["throughput"] += 1
+            self._ep_stats["latency"]   += latency
+            self._ep_stats["latency_n"] += 1
+        for i, c in enumerate(self.cloudlets):
+            self._ep_stats["cpu_util_sum"][i] += c.cpu_util
 
         for c in self.cloudlets:
             c.tick()
@@ -168,13 +189,23 @@ class LBROEnvironment:
         priority_mult = (1.5 if (task.static_priority == 1.0
                                 and deadline_violated) else 1.0)
 
-        # real-time imbalance — std of cpu_util across cloudlets
-        cpu_utils = [c.cpu_util for c in self.cloudlets]
+        # Imbalance: std of cpu_util across cloudlets (0 = perfectly balanced)
+        cpu_utils = np.array([c.cpu_util for c in self.cloudlets], dtype=np.float32)
         imbalance = float(np.std(cpu_utils))
 
-        reward = -(self.w_lat  * d_norm                  +
-                self.w_drop * p_drop * priority_mult  +
-                self.w_imb  * imbalance)
+        # Queue saturation penalty: penalise any cloudlet with queue > 60% full
+        # Grows quadratically above threshold so agent avoids hot-spotting
+        OVERLOAD_THRESH = 0.6
+        overload = 0.0
+        for c in self.cloudlets:
+            excess = float(c.queue_util) - OVERLOAD_THRESH
+            if excess > 0.0:
+                overload += excess ** 2
+
+        reward = -(self.w_lat      * d_norm                 +
+                   self.w_drop    * p_drop * priority_mult  +
+                   self.w_imb     * imbalance               +
+                   self.w_overload * overload)
 
         return float(reward)
 
@@ -219,25 +250,34 @@ class LBROEnvironment:
     @staticmethod
     def _blank_stats() -> dict:
         return {
-            "tasks"  : 0,
-            "dropped": 0,
-            "latency": 0.0,
-            "energy" : 0.0,
-            "actions": [0] * NUM_ACTIONS,
+            "tasks"       : 0,
+            "dropped"     : 0,
+            "throughput"  : 0,
+            "latency"     : 0.0,
+            "latency_n"   : 0,
+            "energy"      : 0.0,
+            "actions"     : [0] * NUM_ACTIONS,
+            "cpu_util_sum": [0.0] * NUM_CLOUDLETS,
         }
 
 
     def episode_summary(self) -> dict:
         s = self._ep_stats
         n = max(s["tasks"], 1)
+        steps = max(self.current_step, 1)
+        avg_cpu = [u / steps for u in s["cpu_util_sum"]]
         return {
-            "total_tasks"   : s["tasks"],
-            "drop_rate"     : s["dropped"]  / n,
-            "avg_latency_s" : s["latency"]  / n,
-            "avg_energy_j"  : s["energy"]   / n,
-            "action_dist"   : [a / n for a in s["actions"]],
-            "cloudlet_stats": [c.summary() for c in self.cloudlets],
-            "cloud_stats"   : self.cloud.summary(),
+            "total_tasks"     : s["tasks"],
+            "throughput"      : s["throughput"],
+            "drop_rate"       : s["dropped"]  / n,
+            "success_rate"    : s["throughput"] / n,
+            "avg_latency_s"   : s["latency"] / max(s["latency_n"], 1),
+            "avg_energy_j"    : s["energy"]   / n,
+            "action_dist"     : [a / n for a in s["actions"]],
+            "avg_cpu_util"    : avg_cpu,
+            "avg_resource_util": float(np.mean(avg_cpu)),
+            "cloudlet_stats"  : [c.summary() for c in self.cloudlets],
+            "cloud_stats"     : self.cloud.summary(),
         }
 
     @property

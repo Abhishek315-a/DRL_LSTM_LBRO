@@ -7,7 +7,7 @@
 
 # ── IoT Layer ─────────────────────────────────────────────────
 NUM_DEVICES          = 50
-TASK_ARRIVAL_PROB    = 0.05
+TASK_ARRIVAL_PROB    = 0.2     # 50 devices × 0.2 = ~10 tasks/slot, ~2000 tasks/episode
 TASK_SIZE_MIN        = 2.0          # Mbits
 TASK_SIZE_MAX        = 5.0          # Mbits
 PROCESSING_DENSITY   = 0.297        # GCycles/Mbit  (AICDQN Eq. 2)
@@ -30,8 +30,8 @@ TASK_BAL = 2
 NUM_CLOUDLETS      = 3
 CLOUDLET_MIPS      = [8_000, 8_000, 8_000]  # equal MIPS — forces smart routing
 CLOUDLET_RAM_MB    = [16384, 8192,  4096]   # different RAM — RF type routing needed
-CLOUDLET_SERVERS   = [4,     2,     2]      # different cores
-CLOUDLET_MAX_QUEUE = [50,    40,    30]
+CLOUDLET_SERVERS   = [4,     3,     2]      # C1 gets extra server — useful for spreading
+CLOUDLET_MAX_QUEUE = [30,    25,    20]     # tighter caps — C0 overflows at realistic load
 EDGE_LAN_MBPS      = 100.0
 EDGE_PROP_DELAY_MS = [2.0,   3.0,   4.0]
 
@@ -63,16 +63,17 @@ ENERGY_SLEEP  = 2
 
 # ── MDP Settings ──────────────────────────────────────────────
 NUM_ACTIONS      = 4
-STATE_DIM        = 23
+STATE_DIM        = 23   # 18 cloudlet + 2 cloud + 3 task_demand (RF one-hot removed)
 TIME_SLOT_S      = 0.1
 MAX_STEPS_PER_EP = 200
 NUM_EPISODES     = 1000   # increased from 500
 
 
 # ── Reward Weights ────────────────────────────────────────────
-W_LATENCY    = 2.0    # increased — latency is key metric
-W_DROP       = 5.0    # increased — dropping tasks is very bad
-W_IMBALANCE = 0.3   
+W_LATENCY    = 2.0    # latency penalty
+W_DROP       = 5.0    # drop / deadline miss penalty
+W_IMBALANCE  = 2.0    # ← raised from 0.3: forces agent to spread load
+W_OVERLOAD   = 3.0    # ← new: per-cloudlet queue saturation penalty (>60% full)
 LATENCY_MAX_S      = 3.0
 ENERGY_MAX_J       = 5.0
 CLOUD_LATENCY_NORM = 0.25
@@ -85,7 +86,7 @@ LSTM_EPOCHS = 50
 LSTM_BATCH  = 32
 
 
-# ── RF Classifier Settings ────────────────────────────────────
+# ── RF Classifier Settings (legacy — RF removed from architecture) ────
 RF_N_ESTIMATORS = 100
 RF_MAX_DEPTH    = 10
 RF_TEST_SPLIT   = 0.2
@@ -110,9 +111,10 @@ DDQN_HIDDEN_UNITS  = [256, 128]
 
 
 # ── File Paths ────────────────────────────────────────────────
-DATA_DIR       = "data/"
-MODEL_DIR      = "models/"
-RESULTS_DIR    = "results/"
-WORKLOAD_CSV   = "data/workload_traces.csv"
-RF_MODEL_PATH  = "models/rf_model.pkl"
-LSTM_MODEL_PATH = "models/lstm_c{}.keras"
+DATA_DIR          = "data/"
+MODEL_DIR         = "models/"
+RESULTS_DIR       = "results/"
+WORKLOAD_CSV      = "data/workload_traces.csv"
+RF_MODEL_PATH     = "models/rf_model.pkl"
+LSTM_MODEL_PATH   = "models/lstm_c{}.keras"
+GOOGLE_TRACE_PATH = "data/google_cluster_2019/borg_traces_data.csv"

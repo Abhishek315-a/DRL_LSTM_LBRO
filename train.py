@@ -5,7 +5,6 @@
 # Ties together ALL components:
 #   ✅ LBROEnvironment    (simulator/environment.py)
 #   ✅ DDQNAgent          (agents/ddqn.py)
-#   ✅ RFTaskClassifier   (models/rf_classifier.py)
 #   ✅ LSTMPredictor ×3   (models/lstm_predictor.py)
 #
 # Training flow (per step):
@@ -26,6 +25,7 @@
 import os
 import sys
 import time
+import argparse
 import numpy as np
 import pandas as pd
 
@@ -33,13 +33,12 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from simulator.environment  import LBROEnvironment
 from agents.ddqn            import DDQNAgent
-from models.rf_classifier   import RFTaskClassifier
 from models.lstm_predictor  import LSTMPredictor, load_all as load_lstm
 from simulator.config       import (
     NUM_CLOUDLETS, NUM_ACTIONS, STATE_DIM,
     MAX_STEPS_PER_EP, LSTM_WINDOW,
     DDQN_BATCH_SIZE, DDQN_TARGET_UPDATE,
-    MODEL_DIR, RESULTS_DIR
+    MODEL_DIR, RESULTS_DIR,
 )
 
 os.makedirs(MODEL_DIR,   exist_ok=True)
@@ -57,24 +56,32 @@ RESULTS_CSV     = os.path.join(RESULTS_DIR, "training_log.csv")
 # Training loop
 # =============================================================
 
-def train():
+def train(use_lstm=True):
+    tag = "full" if use_lstm else "no_lstm"
+
     print("=" * 60)
-    print("  DRL-LSTM-LBRO  —  Step 6: Training")
+    print(f"  DRL-LSTM-LBRO  —  Step 6: Training  [{tag}]")
     print("=" * 60)
 
-    # ── Load pretrained RF + LSTM models ─────────────────────
+    # ── Load pretrained LSTM models ──────────────────────────
     print("\n  Loading pretrained models...")
-    rf_clf          = RFTaskClassifier.load()
-    lstm_predictors = load_lstm()
-    print(f"  ✅ RF classifier loaded")
-    print(f"  ✅ LSTM predictors loaded  (3 cloudlets)")
+    lstm_predictors = load_lstm() if use_lstm else None
+    print(f"  {'✅' if use_lstm else '⬜'} LSTM predictors({'loaded' if use_lstm else 'DISABLED'})")
 
     # ── Initialise broker + DDQN agent ───────────────────────
     env   = LBROEnvironment(seed=42)
+    if use_lstm:
+        env.attach_lstm_predictors(lstm_predictors)
     agent = DDQNAgent(seed=42)
     print(f"  ✅ LBRO Broker initialised")
     print(f"  ✅ DDQN Agent  initialised  "
           f"(state={STATE_DIM}, actions={NUM_ACTIONS})")
+
+    # ── Model save paths ─────────────────────────────────
+    suffix      = "" if use_lstm else "_no_lstm"
+    best_online = os.path.join(MODEL_DIR, f"ddqn_best{suffix}_online.keras")
+    best_target = os.path.join(MODEL_DIR, f"ddqn_best{suffix}_target.keras")
+    results_csv = os.path.join(RESULTS_DIR, f"training_log{suffix}.csv")
 
     # ── Training log ─────────────────────────────────────────
     log          = []
@@ -97,17 +104,17 @@ def train():
 
         for step in range(MAX_STEPS_PER_EP):
 
-            # ── RF classifies current task ────────────────────
-            task = env.current_task
-            task.task_type = rf_clf.predict(task)
-
             # ── LSTM updates load predictions (every 5 slots) ─
-            if step % 5 == 0:
+            if use_lstm and step % 5 == 0:
                 for cid, predictor in enumerate(lstm_predictors):
                     history = env.get_lstm_input(cid)
                     cpu_p, ram_p = predictor.predict(history)
                     env.lstm_cpu_pred[cid] = cpu_p
                     env.lstm_ram_pred[cid] = ram_p
+            elif not use_lstm:
+                for cid in range(NUM_CLOUDLETS):
+                    env.lstm_cpu_pred[cid] = 0.0
+                    env.lstm_ram_pred[cid] = 0.0
 
             # ── DDQN selects action ───────────────────────────
             training_mode = (ep > WARMUP_EPISODES)
@@ -163,17 +170,12 @@ def train():
         # ── Save best model ───────────────────────────────────
         if ep_reward > best_reward and ep > WARMUP_EPISODES:
             best_reward = ep_reward
-            agent.save(
-                online_path=os.path.join(MODEL_DIR,
-                                         "ddqn_best_online.keras"),
-                target_path=os.path.join(MODEL_DIR,
-                                         "ddqn_best_target.keras")
-            )
+            agent.save(online_path=best_online, target_path=best_target)
 
         # ── Periodic checkpoint ───────────────────────────────
         if ep % SAVE_INTERVAL == 0:
             agent.save()
-            pd.DataFrame(log).to_csv(RESULTS_CSV, index=False)
+            pd.DataFrame(log).to_csv(results_csv, index=False)
             print(f"  {'─' * 56}")
             print(f"  Checkpoint saved at episode {ep}")
             print(f"  {'─' * 56}")
@@ -182,7 +184,7 @@ def train():
     elapsed = time.time() - t_start
     agent.save()
     df_log = pd.DataFrame(log)
-    df_log.to_csv(RESULTS_CSV, index=False)
+    df_log.to_csv(results_csv, index=False)
 
     last50 = df_log.tail(50)
     print(f"\n{'=' * 60}")
@@ -202,11 +204,11 @@ def train():
         avg   = last50[f"action_{i}"].mean()
         bar   = "█" * int(avg * 40)
         print(f"    {label}: {avg:.1%}  {bar}")
-    print(f"\n  Files saved:")
-    print(f"    {RESULTS_CSV}")
+    print(f"  Files saved:")
+    print(f"    {results_csv}")
     print(f"    {os.path.join(MODEL_DIR, 'ddqn_online.keras')}")
-    print(f"    {os.path.join(MODEL_DIR, 'ddqn_best_online.keras')}")
-    print(f"  Next → Step 7: evaluate.py")
+    print(f"    {best_online}")
+    print(f"  Next → Step 7: evaluate.py  (add --model {tag} flag if needed)")
     print(f"{'=' * 60}\n")
 
     return df_log
@@ -217,4 +219,13 @@ def train():
 # =============================================================
 
 if __name__ == "__main__":
-    train()
+    parser = argparse.ArgumentParser(
+        description="Train DRL-LSTM-LBRO or an ablation variant."
+    )
+    parser.add_argument("--no-lstm", action="store_true",
+                        help="Disable LSTM predictions during training (ablation)")
+    parser.add_argument("--episodes", type=int, default=NUM_EPISODES,
+                        help=f"Number of training episodes (default {NUM_EPISODES})")
+    args = parser.parse_args()
+    NUM_EPISODES = args.episodes
+    train(use_lstm=not args.no_lstm)

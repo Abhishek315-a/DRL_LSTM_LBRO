@@ -77,8 +77,8 @@ def test_config():
           "LAN = 100 Mbps (not 4 Mbps)", f"got {EDGE_LAN_MBPS}")
     check(CLOUD_WAN_MBPS == 2.0,
           "WAN = 2 Mbps", f"got {CLOUD_WAN_MBPS}")
-    check(STATE_DIM == 23,
-          "STATE_DIM = 23", f"got {STATE_DIM}")
+    check(STATE_DIM == 26,
+          "STATE_DIM = 26", f"got {STATE_DIM}")
     check(NUM_ACTIONS == 4,
           "NUM_ACTIONS = 4", f"got {NUM_ACTIONS}")
     print(f"    Config loaded successfully ✓")

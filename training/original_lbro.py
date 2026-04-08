@@ -2,8 +2,9 @@
 # training/original_lbro.py
 # Baseline: Original LBRO (Nayyer et al.)
 #
-# Composite Resource Index (CRI) — equal weights:
-#   CRI_i = (1 - cpu_util) * (1 - ram_util) * (1 - queue_util)
+# Composite Resource Index (CRI) — equal weights (Nayyer et al. 2022):
+#   CRI_i = w_cpu*(1-cpu_util) + w_ram*(1-ram_util) + w_queue*(1-queue_util)
+#   w_cpu = w_ram = w_queue = 1/3  (no ML task classification)
 #   Broker picks cloudlet with highest CRI
 # =============================================================
 
@@ -24,15 +25,24 @@ EVAL_EPISODES = 100
 RESULTS_CSV   = os.path.join(RESULTS_DIR, "original_lbro_results.csv")
 
 
+# Equal weights for all resource factors (no ML task classification)
+_W_CPU = 1/3
+_W_RAM = 1/3
+_W_QUE = 1/3
+
+
 def compute_cri(cloudlets):
     """
-    Original LBRO composite resource index.
-    Equal weights for CPU, RAM, queue — no ML.
+    Original LBRO additive weighted CRI (Nayyer et al., IEEE Access 2022):
+      CRI_i = w_cpu*(1-cpu_util) + w_ram*(1-ram_util) + w_queue*(1-queue_util)
+    Equal weights used here (no ML classifier for task-type adaptation).
     """
-    scores = []
-    for c in cloudlets:
-        cri = (1 - c.cpu_util) * (1 - c.ram_util) * (1 - c.queue_util)
-        scores.append(cri)
+    scores = [
+        _W_CPU * (1 - c.cpu_util) +
+        _W_RAM * (1 - c.ram_util) +
+        _W_QUE * (1 - c.queue_util)
+        for c in cloudlets
+    ]
     return int(np.argmax(scores))
 
 
