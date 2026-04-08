@@ -1,0 +1,252 @@
+============================================================
+  DRL-LSTM-LBRO  —  Step 7: Evaluation
+  Seeds: [100, 42, 7]
+============================================================
+
+  Loading models...
+    ✅ Loaded ← models/lstm_c0.keras
+    ✅ Loaded ← models/lstm_c1.keras
+    ✅ Loaded ← models/lstm_c2.keras
+  ✅ DDQN loaded ← models/ddqn_best_online.keras
+  ✅ Full model loaded  (ε=0.0)
+  ✅ DDQN loaded ← models/ddqn_best_no_lstm_online.keras
+  ✅ No-LSTM ablation model loaded (retrained)
+  ✅ PPO loaded ← models/ppo_best_actor.keras
+  ✅ PPO model loaded
+
+  Evaluating 50 episodes per policy per seed...
+
+  Running: DRL-LSTM-LBRO...
+  Loading Google cluster trace → data/google_cluster_2019/borg_traces_data.csv ...
+  ✅ Trace parsed: 294,725 tasks  CPU [1000–3000] MIPS  RAM [256–1280] MB
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+    drop=0.06%±0.19%  lat=0.2553±0.0040s  jfi=0.8259  reward=-74.57
+  Running: Ablation: no LSTM...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+    drop=0.03%±0.15%  lat=0.2305±0.0046s  jfi=0.9095  reward=-58.75
+  Running: LBRO [Nayyer 2022]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+    drop=0.09%±0.24%  lat=0.2781±0.0046s  jfi=0.9979
+  Running: DeepRM [Mao 2016]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+    drop=0.09%±0.23%  lat=0.2756±0.0045s  jfi=0.9950
+  Running: DRL-EdgeLB [Liu 22]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+    drop=0.09%±0.26%  lat=0.2828±0.0049s  jfi=0.9996
+  Running: MADRL-MEC [Zhao 22]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+    drop=0.09%±0.24%  lat=0.2755±0.0043s  jfi=0.9952
+  Running: Pred-LB [2025]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+    drop=0.14%±0.30%  lat=0.2817±0.0049s  jfi=0.9996
+  Running: PPO [Schulman 2017]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+    drop=0.03%±0.14%  lat=0.2226±0.0038s  jfi=0.8814  reward=-61.60
+
+  ✅ Full results saved → results/eval_results.csv
+
+────────────────────────────────────────────────────────────
+  BASELINE COMPARISON  (100 episodes each)
+────────────────────────────────────────────────────────────
+  Policy                Drop    Latency    Energy     JFI    Imbal
+  ──────────────────────────────────────────────────────────────
+  DRL-LSTM-LBRO          ★    0.06%±0.19%    0.2553s    1.9391J  0.8259
+  Ablation: no LSTM           0.03%±0.15%    0.2305s    1.9355J  0.9095
+  LBRO [Nayyer 2022]          0.09%±0.24%    0.2781s    1.9252J  0.9979
+  DeepRM [Mao 2016]           0.09%±0.23%    0.2756s    1.9253J  0.9950
+  DRL-EdgeLB [Liu 22]         0.09%±0.26%    0.2828s    1.9261J  0.9996
+  MADRL-MEC [Zhao 22]         0.09%±0.24%    0.2755s    1.9254J  0.9952
+  Pred-LB [2025]              0.14%±0.30%    0.2817s    1.9235J  0.9996
+  PPO [Schulman 2017]         0.03%±0.14%    0.2226s    1.9311J  0.8814
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs LBRO [Nayyer 2022]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0006  LBRO=0.0009  ↓ 33.3%
+  Latency       DRL=0.2553  LBRO=0.2781  ↓ 8.2%
+  Energy        DRL=1.9391  LBRO=1.9252  ↑ 0.7%
+  JFI           DRL=0.8259  LBRO=0.9979  ↓ 17.2%
+  Imbalance     DRL=0.2809  LBRO=0.0500  ↑ 461.8%
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs DeepRM [Mao 2016]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0006  DeepRM=0.0009  ↓ 33.3%
+  Latency       DRL=0.2553  DeepRM=0.2756  ↓ 7.4%
+  Energy        DRL=1.9391  DeepRM=1.9253  ↑ 0.7%
+  JFI           DRL=0.8259  DeepRM=0.9950  ↓ 17.0%
+  Imbalance     DRL=0.2809  DeepRM=0.0582  ↑ 382.6%
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs DRL-EdgeLB [Liu 22]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0006  EdgeLB=0.0009  ↓ 33.3%
+  Latency       DRL=0.2553  EdgeLB=0.2828  ↓ 9.7%
+  Energy        DRL=1.9391  EdgeLB=1.9261  ↑ 0.7%
+  JFI           DRL=0.8259  EdgeLB=0.9996  ↓ 17.4%
+  Imbalance     DRL=0.2809  EdgeLB=0.0382  ↑ 635.3%
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs MADRL-MEC [Zhao 22]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0006  MADRL=0.0009  ↓ 33.3%
+  Latency       DRL=0.2553  MADRL=0.2755  ↓ 7.3%
+  Energy        DRL=1.9391  MADRL=1.9254  ↑ 0.7%
+  JFI           DRL=0.8259  MADRL=0.9952  ↓ 17.0%
+  Imbalance     DRL=0.2809  MADRL=0.0585  ↑ 380.2%
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs Pred-LB [2025]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0006  PredLB=0.0014  ↓ 57.1%
+  Latency       DRL=0.2553  PredLB=0.2817  ↓ 9.4%
+  Energy        DRL=1.9391  PredLB=1.9235  ↑ 0.8%
+  JFI           DRL=0.8259  PredLB=0.9996  ↓ 17.4%
+  Imbalance     DRL=0.2809  PredLB=0.0408  ↑ 588.5%
+
+============================================================
+  Step 7 COMPLETE ✅
+
+  Multi-seed summary → results/multiseed_comparison.csv
+  Files saved:
+    results/eval_results.csv
+    results/baseline_comparison.csv
+  Next → Step 8: results/plot_results.py
+============================================================
+

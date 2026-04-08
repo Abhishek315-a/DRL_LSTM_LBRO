@@ -28,12 +28,12 @@ from simulator.environment import LBROEnvironment
 from simulator.task        import IoTTaskGenerator
 from simulator.config      import (
     NUM_CLOUDLETS, NUM_ACTIONS, MAX_STEPS_PER_EP,
-    DATA_DIR,
+    DATA_DIR, LSTM_CSV_PATH,
 )
 
 # ── Output paths ──────────────────────────────────────────
 os.makedirs(DATA_DIR, exist_ok=True)
-LSTM_CSV = os.path.join(DATA_DIR, "lstm_traces.csv")
+LSTM_CSV = LSTM_CSV_PATH
 
 # ── Generation settings ──────────────────────────────────────
 NUM_LSTM_EPISODES = 50

@@ -37,6 +37,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from simulator.environment  import LBROEnvironment
 from agents.ddqn            import DDQNAgent
+from agents.ppo             import PPOAgent
 from models.lstm_predictor  import load_all as load_lstm
 from simulator.config       import (
     NUM_CLOUDLETS, NUM_ACTIONS,
@@ -50,6 +51,8 @@ BEST_MODEL        = os.path.join(MODEL_DIR, "ddqn_best_online.keras")
 BEST_TARGET       = os.path.join(MODEL_DIR, "ddqn_best_target.keras")
 NO_LSTM_MODEL     = os.path.join(MODEL_DIR, "ddqn_best_no_lstm_online.keras")
 NO_LSTM_TARGET    = os.path.join(MODEL_DIR, "ddqn_best_no_lstm_target.keras")
+PPO_ACTOR_MODEL   = os.path.join(MODEL_DIR, "ppo_best_actor.keras")
+PPO_CRITIC_MODEL  = os.path.join(MODEL_DIR, "ppo_best_critic.keras")
 EVAL_CSV          = os.path.join(RESULTS_DIR, "eval_results.csv")
 COMPARE_CSV       = os.path.join(RESULTS_DIR, "baseline_comparison.csv")
 MULTI_CSV         = os.path.join(RESULTS_DIR, "multiseed_comparison.csv")
@@ -104,6 +107,11 @@ def policy_madrl_mec(agent, state, step, env, rf_clf=None, task_type=None):
     return int(np.argmin(scores))
 
 
+def policy_ppo(agent, state, step, env, rf_clf=None, task_type=None):
+    """PPO baseline: deterministic greedy action from trained actor network."""
+    return agent.act(state, training=False)
+
+
 def policy_pred_lb(agent, state, step, env, rf_clf=None, task_type=None):
     """Pred-LB [Dynamic Edge LB with Activity Prediction, PMC 2025]:
     Routes to cloudlet with lowest short-term predicted CPU load
@@ -119,18 +127,20 @@ def policy_pred_lb(agent, state, step, env, rf_clf=None, task_type=None):
 # policy_fn, use_lstm
 POLICIES = {
     "DRL-LSTM-LBRO"         : (policy_ddqn,        True ),
-    # ── Ablation: same DDQN weights, LSTM predictions zeroed ────
+    # ── Ablation: retrained DDQN without LSTM ──────────────────
     "Ablation: no LSTM"     : (policy_ddqn,        False),
-    # ── Published paper baselines ───────────────────────────────────
+    # ── Published paper baselines ─────────────────────────────────────
     "LBRO [Nayyer 2022]"    : (policy_lbro_nayyer, False),
     "DeepRM [Mao 2016]"     : (policy_deeprm,      False),
     "DRL-EdgeLB [Liu 22]"   : (policy_drl_edgelb,  False),
     "MADRL-MEC [Zhao 22]"   : (policy_madrl_mec,   False),
     "Pred-LB [2025]"        : (policy_pred_lb,     False),
+    # ── PPO DRL baseline ─────────────────────────────────────────
+    "PPO [Schulman 2017]"   : (policy_ppo,         False),
 }
 
 # Policies that use the DDQN agent (track ep_reward for these)
-DRL_POLICIES = {"DRL-LSTM-LBRO", "Ablation: no LSTM"}
+DRL_POLICIES = {"DRL-LSTM-LBRO", "Ablation: no LSTM", "PPO [Schulman 2017]"}
 
 
 # =============================================================
@@ -177,7 +187,7 @@ def run_policy(policy_name, policy_fn, use_lstm,
         denom = NUM_CLOUDLETS * float(np.sum(x ** 2))
         jfi = float((np.sum(x) ** 2) / denom) if denom > 0 else 1.0
 
-        rows.append({
+        row = {
             "policy"       : policy_name,
             "episode"      : ep,
             "reward"       : round(ep_reward,                       4),
@@ -189,11 +199,10 @@ def run_policy(policy_name, policy_fn, use_lstm,
             "resource_util": round(summary["avg_resource_util"],    4),
             "imbalance"    : round(imbalance,                       4),
             "jfi"          : round(jfi,                             4),
-            "action_0"     : round(summary["action_dist"][0],       4),
-            "action_1"     : round(summary["action_dist"][1],       4),
-            "action_2"     : round(summary["action_dist"][2],       4),
-            "action_3"     : round(summary["action_dist"][3],       4),
-        })
+        }
+        for i, a in enumerate(summary["action_dist"]):
+            row[f"action_{i}"] = round(a, 4)
+        rows.append(row)
 
     return pd.DataFrame(rows)
 
@@ -236,12 +245,30 @@ def main():
         print(f"  ⚠️  No-LSTM retrained model not found — using inference-time zeroing")
         print(f"      Run: python3 train.py --no-lstm   to generate it")
 
+    ppo_agent = PPOAgent(seed=0)
+    if os.path.exists(PPO_ACTOR_MODEL):
+        ppo_agent.load(actor_path=PPO_ACTOR_MODEL, critic_path=PPO_CRITIC_MODEL)
+        print(f"  ✅ PPO model loaded")
+    else:
+        ppo_agent = None
+        print(f"  ⚠️  PPO model not found — skipping PPO baseline")
+        print(f"      Run: python3 train_ppo.py   to generate it")
+
+    policy_agents = {
+        "DRL-LSTM-LBRO"       : agent,
+        "Ablation: no LSTM"   : ablation_agent,
+        "PPO [Schulman 2017]" : ppo_agent,
+    }
+
     print(f"\n  Evaluating {n_eps} episodes per policy per seed...\n")
     all_dfs = []
 
     for name, (fn, use_lstm) in POLICIES.items():
+        active_agent = policy_agents.get(name, agent)
+        if active_agent is None:
+            print(f"  Skipping: {name} (model not available)")
+            continue
         print(f"  Running: {name}...")
-        active_agent = ablation_agent if name == "Ablation: no LSTM" else agent
         seed_dfs = []
         for seed in seeds:
             df = run_policy(name, fn, use_lstm,

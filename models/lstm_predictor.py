@@ -19,12 +19,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from simulator.config import (
     NUM_CLOUDLETS, LSTM_WINDOW, LSTM_UNITS,
     LSTM_EPOCHS, LSTM_BATCH,
-    DATA_DIR, MODEL_DIR, LSTM_MODEL_PATH
+    DATA_DIR, MODEL_DIR, LSTM_MODEL_PATH, LSTM_CSV_PATH
 )
 
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-LSTM_CSV      = os.path.join(DATA_DIR, "lstm_traces.csv")
+LSTM_CSV      = LSTM_CSV_PATH
 LSTM_HORIZON  = 5   # predict 5 slots ahead instead of 1
 
 
@@ -160,7 +160,7 @@ class LSTMPredictor:
         )
         self.is_trained = True
 
-        y_pred  = self.model.predict(X_test, verbose=0)
+        y_pred  = self.model(X_test, training=False).numpy()
         mse     = float(np.mean((y_pred - y_test) ** 2))
         mae     = float(np.mean(np.abs(y_pred - y_test)))
         best_ep = int(np.argmin(self.history.history["val_loss"])) + 1
@@ -187,7 +187,7 @@ class LSTMPredictor:
             f"Expected ({self.window}, 2), got {history.shape}"
 
         x     = history.reshape(1, self.window, 2).astype(np.float32)
-        pred  = self.model.predict(x, verbose=0)[0]
+        pred  = self.model(x, training=False)[0].numpy()
         cpu_p = float(np.clip(pred[0], 0.0, 1.0))
         ram_p = float(np.clip(pred[1], 0.0, 1.0))
         return cpu_p, ram_p
@@ -220,7 +220,7 @@ class LSTMPredictor:
 # =============================================================
 
 def train_all(csv_path: str = LSTM_CSV) -> dict:
-    print("\n  Training GRU-LSTM for all 3 cloudlets...")
+    print(f"\n  Training GRU-LSTM for all {NUM_CLOUDLETS} cloudlets...")
     all_metrics = {}
     for cid in range(NUM_CLOUDLETS):
         predictor                      = LSTMPredictor(cloudlet_id=cid)

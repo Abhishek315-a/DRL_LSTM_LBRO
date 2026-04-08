@@ -1,0 +1,523 @@
+============================================================
+  DRL-LSTM-LBRO  —  Step 7: Evaluation
+  Seeds: [100, 42, 7, 13, 99, 21, 55, 77, 33, 88]
+============================================================
+
+  Loading models...
+    ✅ Loaded ← models/lstm_c0.keras
+    ✅ Loaded ← models/lstm_c1.keras
+    ✅ Loaded ← models/lstm_c2.keras
+  ✅ DDQN loaded ← models/ddqn_best_online.keras
+  ✅ Full model loaded  (ε=0.0)
+  ✅ DDQN loaded ← models/ddqn_best_no_lstm_online.keras
+  ✅ No-LSTM ablation model loaded (retrained)
+
+  Evaluating 50 episodes per policy per seed...
+
+  Running: DRL-LSTM-LBRO...
+  Loading Google cluster trace → data/google_cluster_2019/borg_traces_data.csv ...
+  ✅ Trace parsed: 294,725 tasks  CPU [1000–3000] MIPS  RAM [256–1280] MB
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+      seed=13  ep   1/50
+      seed=13  ep  10/50
+      seed=13  ep  20/50
+      seed=13  ep  30/50
+      seed=13  ep  40/50
+      seed=13  ep  50/50
+      seed=99  ep   1/50
+      seed=99  ep  10/50
+      seed=99  ep  20/50
+      seed=99  ep  30/50
+      seed=99  ep  40/50
+      seed=99  ep  50/50
+      seed=21  ep   1/50
+      seed=21  ep  10/50
+      seed=21  ep  20/50
+      seed=21  ep  30/50
+      seed=21  ep  40/50
+      seed=21  ep  50/50
+      seed=55  ep   1/50
+      seed=55  ep  10/50
+      seed=55  ep  20/50
+      seed=55  ep  30/50
+      seed=55  ep  40/50
+      seed=55  ep  50/50
+      seed=77  ep   1/50
+      seed=77  ep  10/50
+      seed=77  ep  20/50
+      seed=77  ep  30/50
+      seed=77  ep  40/50
+      seed=77  ep  50/50
+      seed=33  ep   1/50
+      seed=33  ep  10/50
+      seed=33  ep  20/50
+      seed=33  ep  30/50
+      seed=33  ep  40/50
+      seed=33  ep  50/50
+      seed=88  ep   1/50
+      seed=88  ep  10/50
+      seed=88  ep  20/50
+      seed=88  ep  30/50
+      seed=88  ep  40/50
+      seed=88  ep  50/50
+    drop=0.58%±0.21%  lat=0.2603±0.0047s  jfi=0.8762  reward=-81.45
+  Running: Ablation: no LSTM...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+      seed=13  ep   1/50
+      seed=13  ep  10/50
+      seed=13  ep  20/50
+      seed=13  ep  30/50
+      seed=13  ep  40/50
+      seed=13  ep  50/50
+      seed=99  ep   1/50
+      seed=99  ep  10/50
+      seed=99  ep  20/50
+      seed=99  ep  30/50
+      seed=99  ep  40/50
+      seed=99  ep  50/50
+      seed=21  ep   1/50
+      seed=21  ep  10/50
+      seed=21  ep  20/50
+      seed=21  ep  30/50
+      seed=21  ep  40/50
+      seed=21  ep  50/50
+      seed=55  ep   1/50
+      seed=55  ep  10/50
+      seed=55  ep  20/50
+      seed=55  ep  30/50
+      seed=55  ep  40/50
+      seed=55  ep  50/50
+      seed=77  ep   1/50
+      seed=77  ep  10/50
+      seed=77  ep  20/50
+      seed=77  ep  30/50
+      seed=77  ep  40/50
+      seed=77  ep  50/50
+      seed=33  ep   1/50
+      seed=33  ep  10/50
+      seed=33  ep  20/50
+      seed=33  ep  30/50
+      seed=33  ep  40/50
+      seed=33  ep  50/50
+      seed=88  ep   1/50
+      seed=88  ep  10/50
+      seed=88  ep  20/50
+      seed=88  ep  30/50
+      seed=88  ep  40/50
+      seed=88  ep  50/50
+    drop=0.61%±0.27%  lat=0.2846±0.0048s  jfi=0.9532  reward=-72.87
+  Running: LBRO [Nayyer 2022]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+      seed=13  ep   1/50
+      seed=13  ep  10/50
+      seed=13  ep  20/50
+      seed=13  ep  30/50
+      seed=13  ep  40/50
+      seed=13  ep  50/50
+      seed=99  ep   1/50
+      seed=99  ep  10/50
+      seed=99  ep  20/50
+      seed=99  ep  30/50
+      seed=99  ep  40/50
+      seed=99  ep  50/50
+      seed=21  ep   1/50
+      seed=21  ep  10/50
+      seed=21  ep  20/50
+      seed=21  ep  30/50
+      seed=21  ep  40/50
+      seed=21  ep  50/50
+      seed=55  ep   1/50
+      seed=55  ep  10/50
+      seed=55  ep  20/50
+      seed=55  ep  30/50
+      seed=55  ep  40/50
+      seed=55  ep  50/50
+      seed=77  ep   1/50
+      seed=77  ep  10/50
+      seed=77  ep  20/50
+      seed=77  ep  30/50
+      seed=77  ep  40/50
+      seed=77  ep  50/50
+      seed=33  ep   1/50
+      seed=33  ep  10/50
+      seed=33  ep  20/50
+      seed=33  ep  30/50
+      seed=33  ep  40/50
+      seed=33  ep  50/50
+      seed=88  ep   1/50
+      seed=88  ep  10/50
+      seed=88  ep  20/50
+      seed=88  ep  30/50
+      seed=88  ep  40/50
+      seed=88  ep  50/50
+    drop=2.76%±1.23%  lat=0.3397±0.0051s  jfi=0.9968
+  Running: DeepRM [Mao 2016]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+      seed=13  ep   1/50
+      seed=13  ep  10/50
+      seed=13  ep  20/50
+      seed=13  ep  30/50
+      seed=13  ep  40/50
+      seed=13  ep  50/50
+      seed=99  ep   1/50
+      seed=99  ep  10/50
+      seed=99  ep  20/50
+      seed=99  ep  30/50
+      seed=99  ep  40/50
+      seed=99  ep  50/50
+      seed=21  ep   1/50
+      seed=21  ep  10/50
+      seed=21  ep  20/50
+      seed=21  ep  30/50
+      seed=21  ep  40/50
+      seed=21  ep  50/50
+      seed=55  ep   1/50
+      seed=55  ep  10/50
+      seed=55  ep  20/50
+      seed=55  ep  30/50
+      seed=55  ep  40/50
+      seed=55  ep  50/50
+      seed=77  ep   1/50
+      seed=77  ep  10/50
+      seed=77  ep  20/50
+      seed=77  ep  30/50
+      seed=77  ep  40/50
+      seed=77  ep  50/50
+      seed=33  ep   1/50
+      seed=33  ep  10/50
+      seed=33  ep  20/50
+      seed=33  ep  30/50
+      seed=33  ep  40/50
+      seed=33  ep  50/50
+      seed=88  ep   1/50
+      seed=88  ep  10/50
+      seed=88  ep  20/50
+      seed=88  ep  30/50
+      seed=88  ep  40/50
+      seed=88  ep  50/50
+    drop=2.00%±0.94%  lat=0.3350±0.0053s  jfi=0.9902
+  Running: DRL-EdgeLB [Liu 22]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+      seed=13  ep   1/50
+      seed=13  ep  10/50
+      seed=13  ep  20/50
+      seed=13  ep  30/50
+      seed=13  ep  40/50
+      seed=13  ep  50/50
+      seed=99  ep   1/50
+      seed=99  ep  10/50
+      seed=99  ep  20/50
+      seed=99  ep  30/50
+      seed=99  ep  40/50
+      seed=99  ep  50/50
+      seed=21  ep   1/50
+      seed=21  ep  10/50
+      seed=21  ep  20/50
+      seed=21  ep  30/50
+      seed=21  ep  40/50
+      seed=21  ep  50/50
+      seed=55  ep   1/50
+      seed=55  ep  10/50
+      seed=55  ep  20/50
+      seed=55  ep  30/50
+      seed=55  ep  40/50
+      seed=55  ep  50/50
+      seed=77  ep   1/50
+      seed=77  ep  10/50
+      seed=77  ep  20/50
+      seed=77  ep  30/50
+      seed=77  ep  40/50
+      seed=77  ep  50/50
+      seed=33  ep   1/50
+      seed=33  ep  10/50
+      seed=33  ep  20/50
+      seed=33  ep  30/50
+      seed=33  ep  40/50
+      seed=33  ep  50/50
+      seed=88  ep   1/50
+      seed=88  ep  10/50
+      seed=88  ep  20/50
+      seed=88  ep  30/50
+      seed=88  ep  40/50
+      seed=88  ep  50/50
+    drop=4.35%±1.69%  lat=0.3486±0.0051s  jfi=0.9990
+  Running: MADRL-MEC [Zhao 22]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+      seed=13  ep   1/50
+      seed=13  ep  10/50
+      seed=13  ep  20/50
+      seed=13  ep  30/50
+      seed=13  ep  40/50
+      seed=13  ep  50/50
+      seed=99  ep   1/50
+      seed=99  ep  10/50
+      seed=99  ep  20/50
+      seed=99  ep  30/50
+      seed=99  ep  40/50
+      seed=99  ep  50/50
+      seed=21  ep   1/50
+      seed=21  ep  10/50
+      seed=21  ep  20/50
+      seed=21  ep  30/50
+      seed=21  ep  40/50
+      seed=21  ep  50/50
+      seed=55  ep   1/50
+      seed=55  ep  10/50
+      seed=55  ep  20/50
+      seed=55  ep  30/50
+      seed=55  ep  40/50
+      seed=55  ep  50/50
+      seed=77  ep   1/50
+      seed=77  ep  10/50
+      seed=77  ep  20/50
+      seed=77  ep  30/50
+      seed=77  ep  40/50
+      seed=77  ep  50/50
+      seed=33  ep   1/50
+      seed=33  ep  10/50
+      seed=33  ep  20/50
+      seed=33  ep  30/50
+      seed=33  ep  40/50
+      seed=33  ep  50/50
+      seed=88  ep   1/50
+      seed=88  ep  10/50
+      seed=88  ep  20/50
+      seed=88  ep  30/50
+      seed=88  ep  40/50
+      seed=88  ep  50/50
+    drop=2.07%±1.02%  lat=0.3352±0.0053s  jfi=0.9907
+  Running: Pred-LB [2025]...
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50
+      seed=42  ep  30/50
+      seed=42  ep  40/50
+      seed=42  ep  50/50
+      seed=7  ep   1/50
+      seed=7  ep  10/50
+      seed=7  ep  20/50
+      seed=7  ep  30/50
+      seed=7  ep  40/50
+      seed=7  ep  50/50
+      seed=13  ep   1/50
+      seed=13  ep  10/50
+      seed=13  ep  20/50
+      seed=13  ep  30/50
+      seed=13  ep  40/50
+      seed=13  ep  50/50
+      seed=99  ep   1/50
+      seed=99  ep  10/50
+      seed=99  ep  20/50
+      seed=99  ep  30/50
+      seed=99  ep  40/50
+      seed=99  ep  50/50
+      seed=21  ep   1/50
+      seed=21  ep  10/50
+      seed=21  ep  20/50
+      seed=21  ep  30/50
+      seed=21  ep  40/50
+      seed=21  ep  50/50
+      seed=55  ep   1/50
+      seed=55  ep  10/50
+      seed=55  ep  20/50
+      seed=55  ep  30/50
+      seed=55  ep  40/50
+      seed=55  ep  50/50
+      seed=77  ep   1/50
+      seed=77  ep  10/50
+      seed=77  ep  20/50
+      seed=77  ep  30/50
+      seed=77  ep  40/50
+      seed=77  ep  50/50
+      seed=33  ep   1/50
+      seed=33  ep  10/50
+      seed=33  ep  20/50
+      seed=33  ep  30/50
+      seed=33  ep  40/50
+      seed=33  ep  50/50
+      seed=88  ep   1/50
+      seed=88  ep  10/50
+      seed=88  ep  20/50
+      seed=88  ep  30/50
+      seed=88  ep  40/50
+      seed=88  ep  50/50
+    drop=5.24%±1.77%  lat=0.3479±0.0050s  jfi=0.9994
+
+  ✅ Full results saved → results/eval_results.csv
+
+────────────────────────────────────────────────────────────
+  BASELINE COMPARISON  (100 episodes each)
+────────────────────────────────────────────────────────────
+  Policy                Drop    Latency    Energy     JFI    Imbal
+  ──────────────────────────────────────────────────────────────
+  DRL-LSTM-LBRO          ★    0.58%±0.21%    0.2603s    1.9488J  0.8762
+  Ablation: no LSTM           0.61%±0.27%    0.2846s    1.9453J  0.9532
+  LBRO [Nayyer 2022]          2.76%±1.23%    0.3397s    1.8974J  0.9968
+  DeepRM [Mao 2016]           2.00%±0.94%    0.3350s    1.9122J  0.9902
+  DRL-EdgeLB [Liu 22]         4.35%±1.69%    0.3486s    1.8649J  0.9990
+  MADRL-MEC [Zhao 22]         2.07%±1.02%    0.3352s    1.9109J  0.9907
+  Pred-LB [2025]              5.24%±1.77%    0.3479s    1.8478J  0.9994
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs LBRO [Nayyer 2022]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0058  LBRO=0.0276  ↓ 79.0%
+  Latency       DRL=0.2603  LBRO=0.3397  ↓ 23.4%
+  Energy        DRL=1.9488  LBRO=1.8974  ↑ 2.7%
+  JFI           DRL=0.8762  LBRO=0.9968  ↓ 12.1%
+  Imbalance     DRL=0.2989  LBRO=0.0926  ↑ 222.8%
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs DeepRM [Mao 2016]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0058  DeepRM=0.0200  ↓ 71.0%
+  Latency       DRL=0.2603  DeepRM=0.3350  ↓ 22.3%
+  Energy        DRL=1.9488  DeepRM=1.9122  ↑ 1.9%
+  JFI           DRL=0.8762  DeepRM=0.9902  ↓ 11.5%
+  Imbalance     DRL=0.2989  DeepRM=0.1114  ↑ 168.3%
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs DRL-EdgeLB [Liu 22]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0058  EdgeLB=0.0435  ↓ 86.7%
+  Latency       DRL=0.2603  EdgeLB=0.3486  ↓ 25.3%
+  Energy        DRL=1.9488  EdgeLB=1.8649  ↑ 4.5%
+  JFI           DRL=0.8762  EdgeLB=0.9990  ↓ 12.3%
+  Imbalance     DRL=0.2989  EdgeLB=0.0592  ↑ 404.9%
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs MADRL-MEC [Zhao 22]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0058  MADRL=0.0207  ↓ 72.0%
+  Latency       DRL=0.2603  MADRL=0.3352  ↓ 22.3%
+  Energy        DRL=1.9488  MADRL=1.9109  ↑ 2.0%
+  JFI           DRL=0.8762  MADRL=0.9907  ↓ 11.6%
+  Imbalance     DRL=0.2989  MADRL=0.1101  ↑ 171.5%
+
+────────────────────────────────────────────────────────────
+  IMPROVEMENT: DRL-LSTM-LBRO vs Pred-LB [2025]
+────────────────────────────────────────────────────────────
+  Drop rate     DRL=0.0058  PredLB=0.0524  ↓ 88.9%
+  Latency       DRL=0.2603  PredLB=0.3479  ↓ 25.2%
+  Energy        DRL=1.9488  PredLB=1.8478  ↑ 5.5%
+  JFI           DRL=0.8762  PredLB=0.9994  ↓ 12.3%
+  Imbalance     DRL=0.2989  PredLB=0.0582  ↑ 413.6%
+
+============================================================
+  Step 7 COMPLETE ✅
+
+  Multi-seed summary → results/multiseed_comparison.csv
+  Files saved:
+    results/eval_results.csv
+    results/baseline_comparison.csv
+  Next → Step 8: results/plot_results.py
+============================================================
+

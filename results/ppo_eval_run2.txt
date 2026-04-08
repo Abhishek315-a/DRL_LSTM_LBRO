@@ -1,0 +1,30 @@
+============================================================
+  DRL-LSTM-LBRO  —  Step 7: Evaluation
+  Seeds: [100, 42, 7]
+============================================================
+
+  Loading models...
+    ✅ Loaded ← models/lstm_c0.keras
+    ✅ Loaded ← models/lstm_c1.keras
+    ✅ Loaded ← models/lstm_c2.keras
+  ✅ DDQN loaded ← models/ddqn_best_online.keras
+  ✅ Full model loaded  (ε=0.0)
+  ✅ DDQN loaded ← models/ddqn_best_no_lstm_online.keras
+  ✅ No-LSTM ablation model loaded (retrained)
+  ✅ PPO loaded ← models/ppo_best_actor.keras
+  ✅ PPO model loaded
+
+  Evaluating 50 episodes per policy per seed...
+
+  Running: DRL-LSTM-LBRO...
+  Loading Google cluster trace → data/google_cluster_2019/borg_traces_data.csv ...
+  ✅ Trace parsed: 294,725 tasks  CPU [1000–3000] MIPS  RAM [256–1280] MB
+      seed=100  ep   1/50
+      seed=100  ep  10/50
+      seed=100  ep  20/50
+      seed=100  ep  30/50
+      seed=100  ep  40/50
+      seed=100  ep  50/50
+      seed=42  ep   1/50
+      seed=42  ep  10/50
+      seed=42  ep  20/50

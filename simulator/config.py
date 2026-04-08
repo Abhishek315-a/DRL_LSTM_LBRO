@@ -4,6 +4,8 @@
 # Aligned with: AICDQN (Scientific Reports 2026) + your thesis
 # =============================================================
 
+import os
+
 
 # ── IoT Layer ─────────────────────────────────────────────────
 NUM_DEVICES          = 50
@@ -27,13 +29,20 @@ TASK_BAL = 2
 
 
 # ── Edge Cloudlets ────────────────────────────────────────────
-NUM_CLOUDLETS      = 3
-CLOUDLET_MIPS      = [8_000, 8_000, 8_000]  # equal MIPS — forces smart routing
-CLOUDLET_RAM_MB    = [16384, 8192,  4096]   # different RAM — RF type routing needed
-CLOUDLET_SERVERS   = [4,     3,     2]      # C1 gets extra server — useful for spreading
-CLOUDLET_MAX_QUEUE = [30,    25,    20]     # tighter caps — C0 overflows at realistic load
+NUM_CLOUDLETS      = int(os.environ.get("NUM_CLOUDLETS_OVERRIDE", "3"))
+
+_CLOUDLET_MIPS_ALL      = [8_000, 8_000, 8_000, 8_000, 8_000, 8_000]
+_CLOUDLET_RAM_MB_ALL    = [16384, 8192,  4096,  12288, 8192,  4096 ]
+_CLOUDLET_SERVERS_ALL   = [4,     3,     2,     4,     3,     2    ]
+_CLOUDLET_MAX_QUEUE_ALL = [30,    25,    20,    30,    25,    20   ]
+_EDGE_PROP_DELAY_MS_ALL = [2.0,   3.0,   4.0,   2.5,   3.5,   4.5 ]
+
+CLOUDLET_MIPS      = _CLOUDLET_MIPS_ALL[:NUM_CLOUDLETS]
+CLOUDLET_RAM_MB    = _CLOUDLET_RAM_MB_ALL[:NUM_CLOUDLETS]
+CLOUDLET_SERVERS   = _CLOUDLET_SERVERS_ALL[:NUM_CLOUDLETS]
+CLOUDLET_MAX_QUEUE = _CLOUDLET_MAX_QUEUE_ALL[:NUM_CLOUDLETS]
 EDGE_LAN_MBPS      = 100.0
-EDGE_PROP_DELAY_MS = [2.0,   3.0,   4.0]
+EDGE_PROP_DELAY_MS = _EDGE_PROP_DELAY_MS_ALL[:NUM_CLOUDLETS]
 
 CPU_CRITICAL_THRESH = 0.85
 RAM_CRITICAL_THRESH = 0.85
@@ -62,8 +71,8 @@ ENERGY_SLEEP  = 2
 
 
 # ── MDP Settings ──────────────────────────────────────────────
-NUM_ACTIONS      = 4
-STATE_DIM        = 23   # 18 cloudlet + 2 cloud + 3 task_demand (RF one-hot removed)
+NUM_ACTIONS      = NUM_CLOUDLETS + 1   # one action per cloudlet + cloud offload
+STATE_DIM        = NUM_CLOUDLETS * 6 + 2 + 3   # 6 features/cloudlet + 2 cloud + 3 task
 TIME_SLOT_S      = 0.1
 MAX_STEPS_PER_EP = 200
 NUM_EPISODES     = 1000   # increased from 500
@@ -111,10 +120,12 @@ DDQN_HIDDEN_UNITS  = [256, 128]
 
 
 # ── File Paths ────────────────────────────────────────────────
+SCALE_SUFFIX      = f"_{NUM_CLOUDLETS}c" if NUM_CLOUDLETS != 3 else ""
 DATA_DIR          = "data/"
-MODEL_DIR         = "models/"
-RESULTS_DIR       = "results/"
+MODEL_DIR         = f"models{SCALE_SUFFIX}/"
+RESULTS_DIR       = f"results{SCALE_SUFFIX}/"
 WORKLOAD_CSV      = "data/workload_traces.csv"
 RF_MODEL_PATH     = "models/rf_model.pkl"
-LSTM_MODEL_PATH   = "models/lstm_c{}.keras"
+LSTM_MODEL_PATH   = f"models{SCALE_SUFFIX}/lstm_c{{}}.keras"
+LSTM_CSV_PATH     = f"data/lstm_traces{SCALE_SUFFIX}.csv"
 GOOGLE_TRACE_PATH = "data/google_cluster_2019/borg_traces_data.csv"
