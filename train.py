@@ -149,10 +149,8 @@ def train(use_lstm=True):
             "avg_loss"   : round(avg_loss,                   6),
             "epsilon"    : round(agent.epsilon,              4),
             "buffer_size": len(agent.buffer),
-            "action_0"   : summary["action_dist"][0],
-            "action_1"   : summary["action_dist"][1],
-            "action_2"   : summary["action_dist"][2],
-            "action_3"   : summary["action_dist"][3],
+            **{f"action_{i}": summary["action_dist"][i]
+               for i in range(NUM_ACTIONS)},
         })
 
         # ── Print progress ────────────────────────────────────
