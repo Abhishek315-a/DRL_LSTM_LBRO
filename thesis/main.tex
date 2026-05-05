@@ -1,0 +1,123 @@
+% ============================================================
+%  M.Tech Thesis  —  NIT Rourkela
+%  Author : Abhishek Kumar Singh (224CS1022)
+%  Supervisor : Prof. Bibhudatta Sahoo
+% ============================================================
+\documentclass[12pt,a4paper,oneside]{report}
+
+% ── Packages ─────────────────────────────────────────────
+\usepackage[a4paper,
+            left=1.5in, right=1.0in,
+            top=1.0in,  bottom=1.0in]{geometry}
+\usepackage{setspace}
+\usepackage{fontenc}
+\usepackage{inputenc}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{cite}
+
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{emptypage}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{tikz}
+
+% ── Hyperref setup ───────────────────────────────────────
+\hypersetup{
+    colorlinks = true,
+    linkcolor  = black,
+    citecolor  = black,
+    urlcolor   = blue,
+    pdftitle   = {DRL-LSTM-LBRO: Adaptive Load Balancing in IoT Edge Computing},
+    pdfauthor  = {Abhishek Kumar Singh},
+}
+
+% ── Line spacing ─────────────────────────────────────────
+\onehalfspacing
+
+% ── Chapter / section title formatting ───────────────────
+\titleformat{\chapter}[display]
+  {\normalfont\large\bfseries\centering}
+  {CHAPTER \thechapter}{0pt}{\large\bfseries\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{-20pt}{20pt}
+
+\titleformat{\section}{\normalfont\normalsize\bfseries\raggedright}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\raggedright}{\thesubsection}{1em}{}
+
+% ── Header / footer ──────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\small\leftmark}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Paragraph style ──────────────────────────────────────
+\setlength{\parindent}{0.5in}
+\setlength{\parskip}{0pt}
+
+% ── ToC / LoF / LoT formatting ───────────────────────────
+\renewcommand{\cftchapfont}{\bfseries}
+\renewcommand{\cftchappagefont}{\bfseries}
+\setlength{\cftbeforechapskip}{6pt}
+
+% ─────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Front matter (Roman numerals) ────────────────────────
+\pagenumbering{roman}
+
+\include{frontmatter/titlepage}
+\include{frontmatter/certificate}
+\include{frontmatter/declaration}
+\include{frontmatter/acknowledgement}
+\include{frontmatter/abstract}
+
+\tableofcontents
+\clearpage
+
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+\clearpage
+
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
+\clearpage
+
+\include{frontmatter/abbreviations}
+
+% ── Main matter (Arabic numerals) ────────────────────────
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\include{chapters/ch1_introduction}
+\include{chapters/ch2_literature_review}
+\include{chapters/ch4_methodology}
+\include{chapters/ch5_results}
+\include{chapters/ch6_conclusion}
+
+% ── Bibliography ─────────────────────────────────────────
+\clearpage
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+% ── Publications ─────────────────────────────────────────
+\include{frontmatter/publications}
+
+\end{document}

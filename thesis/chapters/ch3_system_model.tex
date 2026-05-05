@@ -1,0 +1,322 @@
+% ============================================================
+%  Chapter 3 — System Model and Problem Formulation
+% ============================================================
+\chapter{System Model and Problem Formulation}
+\label{chap:sysmodel}
+
+This chapter formally defines the system model that underlies the
+DRL-LSTM-LBRO framework. It describes the three-tier network
+architecture, the resource models for edge cloudlets and the cloud
+fallback, the IoT task model, the M/M/$c$ queuing framework used to
+compute latency, and the Markov Decision Process (MDP) formulation
+of the scheduling problem. The chapter concludes by stating the
+multi-objective optimisation problem that the framework is designed
+to solve.
+
+% ─────────────────────────────────────────────────────────
+\section{Network Architecture}
+\label{sec:network_arch}
+
+\subsection{Three-Tier Topology}
+
+The system comprises three tiers arranged in increasing distance
+from IoT end devices:
+
+\begin{enumerate}
+  \item \textbf{IoT Device Tier.} A large population of
+  heterogeneous IoT devices---sensors, actuators, cameras, and
+  wearables---continuously generates computational tasks. Each
+  device has negligible local processing capability and must
+  offload every task to a higher tier.
+
+  \item \textbf{Edge Cloudlet Tier.} A set of $N$ edge cloudlets
+  are deployed at or near network access points. Each cloudlet $i
+  \in \{1, \ldots, N\}$ is a multi-server node with finite CPU
+  capacity, RAM, and a bounded task queue. Cloudlets are
+  heterogeneous: they differ in processing speed, memory, number
+  of servers, and queue depth.
+
+  \item \textbf{Cloud Tier.} A single cloud data centre with
+  effectively unlimited compute and memory serves as a fallback
+  destination. It is reached through a WAN link that adds a fixed
+  propagation delay to every offloaded task.
+\end{enumerate}
+
+\subsection{Communication Model}
+
+IoT devices communicate with the nearest cloudlet over a Local
+Area Network (LAN) link. The propagation delay from device to
+cloudlet $i$ is denoted $d_i^{\text{prop}}$ (seconds), which
+varies with physical distance and is treated as a known constant
+for each cloudlet. The WAN propagation delay to the cloud is
+$d_{\text{cloud}}^{\text{prop}}$, fixed at 50\,ms in this work.
+Transmission delays are neglected because task payloads are small
+relative to link bandwidth.
+
+% ─────────────────────────────────────────────────────────
+\section{Cloudlet and Cloud Resource Model}
+\label{sec:resource_model}
+
+\subsection{Cloudlet Parameters}
+
+Each cloudlet $i$ is characterised by the following parameters,
+summarised in Table~\ref{tab:cloudlet_params}:
+
+\begin{itemize}
+  \item $M_i$: processing speed in millions of instructions per
+  second (MIPS), equal for all cloudlets at 8000\,MIPS in this
+  work.
+  \item $R_i$: RAM capacity in megabytes.
+  \item $c_i$: number of parallel servers (CPU cores).
+  \item $K_i$: maximum queue length (tasks). A task arriving when
+  the queue is full is dropped immediately.
+  \item $d_i^{\text{prop}}$: edge propagation delay in seconds.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Cloudlet Parameters for the 3-Cloudlet Topology}
+\label{tab:cloudlet_params}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Cloudlet} & \textbf{MIPS} & \textbf{RAM (MB)} &
+\textbf{Servers} & \textbf{Queue} &
+\textbf{Prop.\ Delay (s)} \\
+\midrule
+Cloudlet 1 & 8000 & 16384 & 4 & 30 & 0.002 \\
+Cloudlet 2 & 8000 & 8192  & 3 & 25 & 0.003 \\
+Cloudlet 3 & 8000 & 4096  & 2 & 20 & 0.004 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Runtime Resource State}
+
+At each time step $t$, the observable state of cloudlet $i$
+includes:
+\begin{itemize}
+  \item $\text{cpu\_util}_i(t) \in [0,1]$: fraction of CPU
+  capacity currently in use.
+  \item $\text{ram\_util}_i(t) \in [0,1]$: fraction of RAM
+  currently allocated.
+  \item $q_i(t) \in [0, K_i]$: number of tasks currently in the
+  queue.
+\end{itemize}
+
+These quantities are computed from the set of tasks currently
+being served and waiting in the queue at each cloudlet.
+
+\subsection{Cloud Resource Model}
+
+The cloud is modelled as an M/M/$\infty$ server with infinite
+capacity, meaning it never drops tasks. Service time at the cloud
+is computed from the task's instruction count and a fixed cloud
+processing speed of $M_{\text{cloud}} = 32{,}000$\,MIPS.
+End-to-end latency for a cloud-assigned task is:
+\begin{equation}
+  l_{\text{cloud}} = d_{\text{cloud}}^{\text{prop}}
+  + \frac{\text{MI}}{ M_{\text{cloud}} }
+  \label{eq:cloud_latency}
+\end{equation}
+where MI is the task's instruction count in millions.
+
+% ─────────────────────────────────────────────────────────
+\section{IoT Task Model}
+\label{sec:task_model}
+
+\subsection{Task Characteristics}
+
+Each IoT task $\tau$ arriving at time step $t$ is described by a
+tuple $\langle \text{MI}, r_{\tau}, d_{\tau} \rangle$, where:
+\begin{itemize}
+  \item $\text{MI}$: computational demand in millions of
+  instructions, drawn from a Poisson distribution with mean
+  $\bar{\lambda}_{\text{MI}}$.
+  \item $r_{\tau}$: RAM required for execution in MB, drawn from
+  a uniform distribution over $[r_{\min}, r_{\max}]$.
+  \item $d_{\tau}$: deadline in seconds by which the task must
+  complete to avoid a deadline violation penalty.
+\end{itemize}
+
+One task arrives per time step. The task generator produces
+workload statistics calibrated against the Google Borg cluster
+trace~\cite{reiss2011google}, ensuring that the instruction-count
+and resource-demand distributions reflect a realistic mix of
+short and long jobs.
+
+\subsection{Task Acceptance and Dropping}
+
+A task $\tau$ assigned to cloudlet $i$ is accepted if and only if:
+\begin{equation}
+  q_i(t) < K_i \quad \text{and} \quad
+  \text{ram\_util}_i(t) \cdot R_i + r_{\tau} \leq R_i
+  \label{eq:accept_condition}
+\end{equation}
+If either condition fails, the task is dropped and a penalty of
+$-P_{\text{drop}}$ is applied to the reward signal. The cloud
+never drops tasks (its queue is unbounded and RAM is unlimited in
+the model).
+
+% ─────────────────────────────────────────────────────────
+\section{Queuing Model}
+\label{sec:queue_model}
+
+\subsection{M/M/\textit{c} Framework}
+
+Each edge cloudlet is modelled as an M/M/$c$ queue with a finite
+waiting room of size $K_i$. Task arrivals follow a Poisson process
+with rate $\lambda$ (tasks per step), and service times are
+exponentially distributed with rate $\mu_i = M_i / \bar{\text{MI}}$
+(tasks per step). The traffic intensity for cloudlet $i$ is:
+\begin{equation}
+  \rho_i = \frac{\lambda}{c_i \, \mu_i}
+  \label{eq:traffic_intensity}
+\end{equation}
+
+\subsection{Waiting Time via Erlang-C}
+
+When a task is accepted by cloudlet $i$ and all $c_i$ servers are
+busy, it waits in the queue. The expected waiting time is
+computed using the Erlang-C formula. Let
+\begin{equation}
+  C(c_i, \rho_i) =
+  \frac{ \dfrac{(c_i \rho_i)^{c_i}}{c_i!\,(1-\rho_i)} }
+       { \displaystyle\sum_{k=0}^{c_i-1}
+         \frac{(c_i \rho_i)^k}{k!}
+         + \frac{(c_i \rho_i)^{c_i}}{c_i!\,(1-\rho_i)} }
+  \label{eq:erlang_c}
+\end{equation}
+be the probability that an arriving task must wait. The expected
+queueing delay is:
+\begin{equation}
+  W_i = \frac{C(c_i, \rho_i)}{c_i \, \mu_i \,(1 - \rho_i)}
+  \label{eq:queue_delay}
+\end{equation}
+
+\subsection{End-to-End Latency}
+
+The total end-to-end latency for a task accepted by cloudlet $i$
+is:
+\begin{equation}
+  l_i = d_i^{\text{prop}} + W_i + \frac{\text{MI}}{M_i}
+  \label{eq:edge_latency}
+\end{equation}
+Only completed tasks contribute to the average latency metric;
+dropped tasks are excluded.
+
+% ─────────────────────────────────────────────────────────
+\section{MDP Formulation}
+\label{sec:mdp}
+
+The task scheduling problem is formalised as a Markov Decision
+Process (MDP) $\mathcal{M} = \langle \mathcal{S}, \mathcal{A},
+\mathcal{P}, \mathcal{R}, \gamma \rangle$.
+
+\subsection{State Space}
+
+At each time step $t$, the agent observes a state vector
+$s_t \in \mathcal{S} \subset \mathbb{R}^{6N+5}$. The state
+is constructed from three groups of features:
+
+\begin{enumerate}
+  \item \textbf{Current cloudlet state} (3 values per cloudlet):
+  CPU utilisation, RAM utilisation, and normalised queue occupancy
+  for each of the $N$ cloudlets.
+
+  \item \textbf{LSTM load predictions} (2 values per cloudlet):
+  predicted next-step CPU and RAM utilisation from the per-cloudlet
+  GRU-LSTM predictor.
+
+  \item \textbf{Task features} (3 values): normalised MI demand,
+  normalised RAM demand, and normalised deadline of the arriving
+  task.
+
+  \item \textbf{Global features} (2 values): a global load
+  indicator (mean CPU utilisation across all cloudlets) and a
+  Jain's Fairness Index (JFI) measuring current load balance.
+\end{enumerate}
+
+For the 3-cloudlet baseline, the state dimension is
+$6 \times 3 + 5 = 23$. For the 6-cloudlet experiment it expands
+to $6 \times 6 + 5 = 41$, with no other architectural change.
+
+\subsection{Action Space}
+
+The action $a_t \in \{0, 1, \ldots, N\}$ specifies the
+destination for the arriving task: values $0$ through $N{-}1$
+correspond to the $N$ edge cloudlets, and value $N$ corresponds
+to the cloud fallback. For the 3-cloudlet topology,
+$|\mathcal{A}| = 4$; for the 6-cloudlet topology,
+$|\mathcal{A}| = 7$.
+
+\subsection{Transition Dynamics}
+
+The environment transitions deterministically given the chosen
+action: the task is added to the selected destination's queue (if
+accepted), resource utilisations are updated, and the next task
+is generated. From the agent's perspective the dynamics are
+partially stochastic because future task arrivals are unknown.
+
+\subsection{Reward Function}
+
+The scalar reward $r_t$ at step $t$ is a weighted combination
+of six terms:
+
+\begin{equation}
+r_t = w_1 r_{\text{drop}} + w_2 r_{\text{latency}}
+    + w_3 r_{\text{deadline}} + w_4 r_{\text{energy}}
+    + w_5 r_{\text{balance}} + w_6 r_{\text{overload}}
+\label{eq:reward}
+\end{equation}
+
+\begin{itemize}
+  \item $r_{\text{drop}} = -1$ if the task is dropped, $0$
+  otherwise.
+  \item $r_{\text{latency}} = -l_i / l_{\max}$, a latency
+  penalty normalised by the maximum acceptable latency.
+  \item $r_{\text{deadline}} = -1$ if $l_i > d_\tau$, $0$
+  otherwise.
+  \item $r_{\text{energy}} = -e_i / e_{\max}$, an energy penalty
+  proportional to estimated execution energy.
+  \item $r_{\text{balance}} = \text{JFI}(t) - 1$, rewarding even
+  distribution of load across cloudlets.
+  \item $r_{\text{overload}} = -\mathbf{1}[\text{cpu\_util}_i > \theta]$,
+  a penalty for routing to an already heavily loaded cloudlet,
+  where $\theta = 0.62$ is the overload threshold.
+\end{itemize}
+
+The weights $\{w_k\}$ are tuned so that drop-rate reduction is
+prioritised, with latency and energy as secondary objectives and
+balance and overload prevention as regularisation terms.
+
+\subsection{Discount Factor}
+
+The discount factor $\gamma = 0.99$ encourages the agent to
+consider long-horizon consequences of each placement decision,
+particularly the downstream effect on queue build-up at the
+selected cloudlet.
+
+% ─────────────────────────────────────────────────────────
+\section{Optimisation Objective}
+\label{sec:objective}
+
+Let $\pi : \mathcal{S} \rightarrow \mathcal{A}$ denote a
+deterministic scheduling policy. The objective is to find a
+policy $\pi^*$ that maximises the expected discounted cumulative
+reward over an episode of $T$ steps:
+
+\begin{equation}
+\pi^* = \arg\max_{\pi} \;
+\mathbb{E}_{\pi} \!\left[
+  \sum_{t=0}^{T} \gamma^t \, r_t
+\right]
+\label{eq:objective}
+\end{equation}
+
+This objective jointly minimises the task drop rate, average
+end-to-end latency, energy consumption, and load imbalance in a
+principled manner through the reward decomposition in
+Equation~(\ref{eq:reward}). Because the reward is a scalar
+combination of all criteria, the agent learns to navigate their
+trade-offs rather than optimising any single one in isolation.

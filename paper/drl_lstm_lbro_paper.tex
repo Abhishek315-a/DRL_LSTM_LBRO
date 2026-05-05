@@ -93,6 +93,22 @@ Jain's Fairness Index, Google Cluster Trace
 % ─────────────────────────────────────────────────────────────────
 \section{Introduction}
 
+The exponential growth of Internet of Things (IoT) devices has placed
+unprecedented demand on computing infrastructure. Traditionally,
+compute-intensive IoT tasks were offloaded entirely to centralised
+cloud data centres over the wide-area network. While cloud computing
+offers virtually unlimited resources, this approach introduces
+round-trip latencies in the range of 100--300\,ms, which are
+unacceptable for latency-critical applications such as autonomous
+vehicles, industrial automation, augmented reality, and real-time
+health monitoring. Furthermore, transmitting raw sensor data from
+thousands of devices to a distant cloud generates substantial
+backhaul congestion and raises privacy concerns. These limitations
+drove the shift toward Mobile Edge Computing (MEC)~\cite{shi2016edge},
+which relocates compute capacity to cloudlets at the network edge,
+reducing propagation delay to single-digit milliseconds while
+keeping sensitive data within the local network.
+
 Mobile Edge Computing (MEC) extends cloud resources to the network
 periphery, enabling latency-sensitive IoT applications to offload
 computation without traversing the wide-area network~\cite{shi2016edge}.
@@ -123,7 +139,7 @@ We address these gaps through two contributions:
     $W_{\text{overload}}{=}3.0$), prevent the agent from collapsing to
     a single high-capacity cloudlet—a common failure mode in DRL-based
     schedulers that, to our knowledge, few prior MEC load balancing works
-    explicitly address through multi-component penalty design~\cite{mao2016resource,liu2022drledgelb}.
+    explicitly address through multi-component penalty design~\cite{mao2016resource,liu2022edgelb}.
 
     \item \textbf{LSTM-augmented predictive state enrichment.}
     Per-cloudlet LSTM predictors forecast CPU and RAM utilisation five
@@ -160,7 +176,7 @@ that scores each cloudlet by
 $\text{CRI}_i = \tfrac{1}{3}(1-u_{\text{cpu},i}) + \tfrac{1}{3}(1-u_{\text{ram},i}) + \tfrac{1}{3}(1-u_{\text{q},i})$
 and routes the task to the highest-scoring node. LBRO achieves
 reasonable performance at low load but has no predictive capability and
-degrades significantly under congestion (2.73\% drops in our
+degrades significantly under congestion (2.76\% drops in our
 experiments). Classical policies such as Weighted Round-Robin (WRR) and
 Join-Shortest-Queue (JSQ) distribute load proportionally to server
 capacity or queue depth, respectively, but are oblivious to future
@@ -174,13 +190,13 @@ superiority of learned policies over heuristics for multi-resource
 scheduling, but was designed for batch job placement in data centres
 rather than real-time IoT task routing. In our MEC context, a DeepRM-style
 agent (selecting the cloudlet with maximum joint CPU--RAM availability)
-achieves 1.98\% drops—better than LBRO but $3.4\times$ worse than our
+achieves 2.00\% drops—better than LBRO but $3.4\times$ worse than our
 approach.
 
 Liu~et~al.~\cite{liu2022edgelb} applied a DQN agent to select edge
 servers for IoT tasks using a combined queue-length and CPU utilisation
 score. Their algorithm (DRL-EdgeLB) treats the routing problem as a
-stateless greedy assignment, yielding 4.27\% drops in our heterogeneous
+stateless greedy assignment, yielding 4.35\% drops in our heterogeneous
 testbed. By contrast, DRL-LSTM-LBRO maintains a history-augmented
 23-dimensional state and trains a full DDQN with experience replay,
 enabling significantly better adaptation.
@@ -188,13 +204,13 @@ enabling significantly better adaptation.
 Zhao~et~al.~\cite{zhao2022madrl} proposed a multi-agent DRL framework
 (MADRL-MEC) for coordinated load balancing across MEC nodes. Each agent
 minimises its local CPU+RAM load independently; centralised coordination
-is approximated at inference time. Their approach achieves 2.06\% drops
-in our testbed, comparable to DeepRM but still $3.5\times$ worse than
+is approximated at inference time. Their approach achieves 2.07\% drops
+in our testbed, comparable to DeepRM but still $3.6\times$ worse than
 DRL-LSTM-LBRO, because the agents lack predictive load context.
 
 Recent work on prediction-based routing~\cite{predlb2025} uses node
 activity history (moving averages) to select the least loaded edge node
-at each slot. This Pred-LB approach records 5.39\% drops in our
+at each slot. This Pred-LB approach records 5.24\% drops in our
 experiments, revealing that short-horizon averaging without a learned
 policy is insufficient under bursty IoT arrivals.
 
@@ -219,10 +235,12 @@ cloudlets connected by a 100\,Mbps LAN. The cloud tier provides
 unbounded compute but incurs 200--300\,ms WAN latency.
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=0.48\textwidth]{fig_system_model.png}}
+\centering
+\includegraphics[width=\columnwidth]{fig_system_model.png}
 \caption{Three-tier IoT--Edge--Cloud system model.
 The task broker (DRL-LSTM-LBRO) routes each IoT task to one of three
-heterogeneous cloudlets or the remote cloud.}
+heterogeneous cloudlets or the remote cloud. Architecture adapted from
+the MEC deployment model described in~\cite{shi2016edge}.}
 \label{fig:sysmodel}
 \end{figure}
 
@@ -285,10 +303,12 @@ Fig.~\ref{fig:arch} shows the two-stage pipeline executed at each
 task arrival.
 
 \begin{figure*}[htbp]
-\centerline{\includegraphics[width=0.92\textwidth]{fig_architecture1.png}}
-\caption{DRL-LSTM-LBRO pipeline. Stage~1: LSTM predictors forecast
-cloudlet CPU and RAM loads five slots ahead. Stage~2: DDQN agent
-selects task placement using the 23-dimensional augmented state.}
+\centering
+\includegraphics[width=\textwidth]{fig_architecture1.png}
+\caption{DRL-LSTM-LBRO two-stage pipeline. Stage~1: per-cloudlet GRU-LSTM predictors
+forecast CPU and RAM utilisations five slots ahead; outputs feed directly into the
+23-dimensional state vector. Stage~2: DDQN agent selects task placement
+($a \in \{c_0, c_1, c_2, \text{cloud}\}$) and updates via experience replay.}
 \label{fig:arch}
 \end{figure*}
 
@@ -317,7 +337,7 @@ The 23-dimensional state vector $\mathbf{s} \in \mathbb{R}^{23}$ is:
 \end{equation}
 where each cloudlet block $\mathbf{c}_i \in \mathbb{R}^6$ contains
 $[u_{\text{cpu},i},\, u_{\text{ram},i},\, u_{\text{q},i},\,
-\hat{u}_{\text{cpu},i},\, \hat{u}_{\text{ram},i},\, \mathbb{1}[\text{crit}_i]]$
+\hat{u}_{\text{cpu},i},\, \hat{u}_{\text{ram},i},\, \mathbf{1}[\text{crit}_i]]$
 and $\phi_i$ is the dynamic priority score (urgency, congestion,
 static priority) from~\cite{aicdqn2026}. Total: $6{\times}3 + 2 + 3 = 23$.
 
@@ -330,7 +350,7 @@ $c_0, c_1, c_2$, and the remote cloud, respectively.
 
 The reward at step $t$ is:
 \begin{equation}
-r_t = -W_l \hat{l}_t - W_d \mathbb{1}[\text{drop}] -
+r_t = -W_l \hat{l}_t - W_d \mathbf{1}[\text{drop}] -
       W_i \sigma(\mathbf{u}) - \sum_{i} W_o \max(0,\, u_{\text{q},i} - 0.6)
 \label{eq:reward}
 \end{equation}
@@ -370,6 +390,45 @@ Training episodes           & 1{,}000 \\
 Steps per episode           & 200 \\
 \bottomrule
 \end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{table}[htbp]
+\centering
+\caption{Summary of Notation}
+\label{tab:notation}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{cl}
+\toprule
+\textbf{Symbol} & \textbf{Definition} \\
+\midrule
+$N$                          & Number of IoT devices (50) \\
+$\lambda$                    & Task arrival rate per slot \\
+$c_i$                        & Number of servers in cloudlet $i$ \\
+$\mu_i$                      & Service rate of cloudlet $i$ (MIPS) \\
+$\rho_i$                     & Traffic intensity at cloudlet $i$ \\
+$K_i$                        & Queue capacity of cloudlet $i$ \\
+$u_{\text{cpu},i}$           & CPU utilisation of cloudlet $i$ \\
+$u_{\text{ram},i}$           & RAM utilisation of cloudlet $i$ \\
+$u_{\text{q},i}$             & Queue fill ratio of cloudlet $i$ \\
+$\hat{u}_{\text{cpu},i}$     & LSTM-predicted CPU utilisation \\
+$\hat{u}_{\text{ram},i}$     & LSTM-predicted RAM utilisation \\
+$\mathbf{1}[\cdot]$          & Indicator function (1 if condition true, else 0) \\
+$d_{\text{cpu}},d_{\text{ram}}$ & Task CPU demand (MIPS) and RAM demand (MB) \\
+$\phi_i$                     & Dynamic task priority score~\cite{aicdqn2026} \\
+$\mathbf{s} \in \mathbb{R}^{23}$ & DDQN state vector \\
+$a \in \{0,1,2,3\}$          & Placement action ($c_0,c_1,c_2$, cloud) \\
+$r_t$                        & Reward at step $t$ (Eq.~\ref{eq:reward}) \\
+$T_t$                        & End-to-end task latency at step $t$ \\
+$T_{\max}$                   & Maximum latency (normalisation constant) \\
+$\hat{l}_t = T_t/T_{\max}$   & Normalised latency \\
+$\sigma(\mathbf{u})$         & Std.\ deviation of cloudlet CPU utilisations \\
+$W_l, W_d, W_i, W_o$        & Reward weights: latency, drop, imbalance, overload \\
+$\gamma$                     & Discount factor \\
+$\varepsilon$                & Exploration rate ($\varepsilon$-greedy) \\
+$\theta,\,\theta^{-}$        & Online and target DDQN network parameters \\
+\bottomrule
+\end{tabular}}
 \end{table}
 
 % ─────────────────────────────────────────────────────────────────
@@ -471,13 +530,13 @@ throughput among all compared algorithms.}
 \subsection{Discussion}
 
 \textbf{Drop rate, latency, and throughput.}
-DRL-LSTM-LBRO achieves the lowest drop rate (0.58\%~$\pm$~0.21\%) --- a
-\textbf{79.0\% relative reduction} over LBRO (2.76\%) and 88.9\% over
-Pred-LB (5.24\%), the weakest baseline. Latency is reported over
+DRL-LSTM-LBRO achieves the lowest drop rate of 0.58\%~$\pm$~0.21\%, a
+\textbf{79.0\% relative reduction} over LBRO at 2.76\% and 88.9\% over
+Pred-LB at 5.24\%, the weakest baseline. Latency is reported over
 completed tasks only; DRL-LSTM-LBRO achieves 0.260\,s vs.\ 0.335--0.349\,s
-for all baselines --- a 23--24\% reduction attributable to proactive
+for all baselines, a 23--24\% reduction attributable to proactive
 queue-aware routing guided by LSTM load forecasts. Throughput is highest
-at 198.8 tasks/episode vs.\ 189.5 for the weakest baseline (Pred-LB).
+at 198.8 tasks/episode vs.\ 189.5 for the weakest baseline Pred-LB.
 
 \textbf{Energy.}
 DRL-LSTM-LBRO records slightly higher energy (1.95\,J vs.\ 1.85\,J for
@@ -586,9 +645,9 @@ Reward shaping & Training experiments & $>$30 (collapse) \\
 
 PPO~\cite{schulman2017ppo} (actor-critic, clipped surrogate objective,
 trained for 500 episodes) achieves a drop rate of 0.79\%~$\pm$~0.50\%
-and latency of 0.369\,s — worse than DRL-LSTM-LBRO on both metrics.
-DRL-LSTM-LBRO reduces task drops by \textbf{26.6\%} (0.58\% vs.\ 0.79\%)
-and latency by \textbf{29.5\%} (0.260\,s vs.\ 0.369\,s) relative to PPO.
+and latency of 0.369\,s --- worse than DRL-LSTM-LBRO on both metrics.
+DRL-LSTM-LBRO reduces task drops by \textbf{26.6\%} from 0.79\% to 0.58\%
+and latency by \textbf{29.5\%} from 0.369\,s to 0.260\,s relative to PPO.
 The PPO result suggests that policy-gradient methods with on-policy updates
 are less sample-efficient in this environment than the value-based DDQN
 with replay buffer. Furthermore, DRL-LSTM-LBRO's LSTM-augmented state
@@ -606,28 +665,28 @@ arrival conditions ($p{=}0.2$, 200 steps/episode, 3 seeds).
 
 \begin{table}[htbp]
 \centering
-\caption{Scalability Results: 6-Cloudlet Topology (3 seeds $\times$ 30 episodes).
-Drop rate mean $\pm$ std across seeds.
-State dimension $\mathbb{R}^{41}$; 7 discrete actions.}
+\caption{Scalability: 6-Cloudlet Topology (3 seeds $\times$ 30 ep.,
+state $\in\mathbb{R}^{41}$, 7 actions).}
 \label{tab:scale}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Algorithm} & \textbf{Drop (\%)} $\downarrow$ &
-\textbf{Latency (s)} $\downarrow$ & \textbf{Thpt} $\uparrow$ &
-\textbf{JFI} $\uparrow$ \\
+\textbf{Algorithm} & \textbf{Drop\,\%}$\downarrow$ &
+\textbf{Lat.\,(s)}$\downarrow$ & \textbf{Thpt}$\uparrow$ &
+\textbf{JFI}$\uparrow$ \\
 \midrule
-\textbf{DRL-LSTM-LBRO (ours)} & \textbf{0.77 $\pm$ 0.53} & \textbf{0.255} & \textbf{198.5} & 0.676 \\
-LBRO~\cite{nayyer2022lbro}    & 1.23 $\pm$ 0.38 & 0.327 & 197.5 & 0.997 \\
-DeepRM~\cite{mao2016resource} & 1.27 $\pm$ 0.38 & 0.324 & 197.5 & 0.995 \\
-DRL-EdgeLB~\cite{liu2022edgelb} & 1.38 $\pm$ 0.49 & 0.333 & 197.2 & 0.995 \\
-MADRL-MEC~\cite{zhao2022madrl}  & 1.30 $\pm$ 0.40 & 0.324 & 197.4 & 0.995 \\
-Pred-LB~\cite{predlb2025}       & 1.52 $\pm$ 0.57 & 0.331 & 197.0 & 0.997 \\
+\textbf{DRL-LSTM-LBRO} & \textbf{0.77$\pm$0.53} & \textbf{0.255} & \textbf{198.5} & 0.676 \\
+LBRO~\cite{nayyer2022lbro}       & 1.23$\pm$0.38 & 0.327 & 197.5 & 0.997 \\
+DeepRM~\cite{mao2016resource}    & 1.27$\pm$0.38 & 0.324 & 197.5 & 0.995 \\
+DRL-EdgeLB~\cite{liu2022edgelb}  & 1.38$\pm$0.49 & 0.333 & 197.2 & 0.995 \\
+MADRL-MEC~\cite{zhao2022madrl}   & 1.30$\pm$0.40 & 0.324 & 197.4 & 0.995 \\
+Pred-LB~\cite{predlb2025}        & 1.52$\pm$0.57 & 0.331 & 197.0 & 0.997 \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
-DRL-LSTM-LBRO achieves the lowest drop rate (0.77\%) and latency
-(0.255\,s) at 6 cloudlets, representing a \textbf{37.4\%} drop reduction
+DRL-LSTM-LBRO achieves the lowest drop rate of 0.77\% and latency
+of 0.255\,s at 6 cloudlets, representing a \textbf{37.4\%} drop reduction
 over LBRO and a \textbf{22.0\%} latency reduction over the worst
 baseline. The framework adapts to the expanded 7-action space and
 41-dimensional state through the same training procedure, without
@@ -672,41 +731,44 @@ evaluation against five published algorithms on a M/M/$c$ MEC testbed demonstrat
     latency at 6 cloudlets, a 37.4\% drop reduction over LBRO.
 \end{itemize}
 
-\textbf{Limitations.} Several limitations should be noted for honest
-assessment of these results.
-\begin{itemize}
-    \item \textit{Simulation-only evaluation.} All experiments use a
-    custom Python M/M/$c$ simulator; results may not generalise directly
-    to physical deployments with heterogeneous operating systems,
-    variable wireless channels, or OS scheduling jitter.
-    \item \textit{Statistical validation.} Results are reported over
-    ten seeds (100, 42, 7, 13, 99, 21, 55, 77, 33, 88), yielding a
-    drop-rate standard deviation of $\pm$0.25\% for DRL-LSTM-LBRO.
-    Formal statistical significance tests (e.g., Wilcoxon rank-sum)
-    against each baseline are left for the extended version.
-    \item \textit{Computational cost.} Training requires approximately
-    $1{,}000$ episodes $\times$ 200 steps on an Apple M-series CPU
-    ($\approx$15--20 minutes). Inference adds one Q-network forward pass
-    per task ($\mathcal{O}(d^2)$ with hidden dimension $d{=}256$), which
-    is negligible at the 0.1\,s slot interval.
-    \item \textit{Scalability.} The current framework uses a fixed-size
-    state vector ($\mathbb{R}^{23}$) for three cloudlets; adding a
-    fourth cloudlet requires retraining the DDQN and the LSTM predictors.
-    A parameterised or attention-based state encoding would be needed for
-    a variable number of nodes.
-    \item \textit{Ablation study.} The inference-time LSTM ablation
-    provides partial evidence; a formally retrained Without-LSTM variant
-    is needed to fully quantify LSTM's contribution to convergence quality.
-\end{itemize}
-Future work will focus on: (i) validating DRL-LSTM-LBRO on a physical
-MEC testbed; (ii) incorporating wireless channel models for realistic
-transmission latency; (iii) multi-seed statistical validation;
-(iv) extending the state encoding to support a variable number of
-cloudlets via attention or graph neural network representations.
+While working on this framework, several limitations were encountered
+that are worth acknowledging. All experiments are conducted within a
+custom Python-based M/M/$c$ discrete-event simulator, meaning the
+results may not transfer directly to physical deployments where
+wireless channel variability, OS scheduling jitter, and hardware
+heterogeneity introduce additional sources of noise. The current
+state vector has a fixed dimension tied to the number of cloudlets,
+so scaling to a new topology requires retraining both the DDQN and
+the LSTM predictors from scratch. Training is also computationally
+modest but not negligible, requiring approximately 15--20 minutes on
+an Apple M-series CPU for 1{,}000 episodes of 200 steps each,
+which may limit rapid deployment iteration. Additionally, while
+results are reported across ten random seeds to provide variance
+estimates, formal statistical significance tests against each
+individual baseline are left for future work.
+
+Looking ahead, the most immediate direction is validating DRL-LSTM-LBRO
+on a physical MEC testbed to assess how simulation-derived policies
+transfer to real hardware. Incorporating realistic wireless channel
+models for transmission latency estimation would make the system model
+more accurate for over-the-air deployments. On the architectural side,
+replacing the fixed-size state vector with a graph neural network
+or attention-based encoding would allow the framework to scale
+dynamically to any number of cloudlets without retraining. Finally,
+extending the reward function to incorporate energy-fairness objectives
+and exploring multi-agent variants where each cloudlet hosts a local
+DRL agent are promising directions for further improving system
+efficiency in large-scale heterogeneous MEC environments.
 
 % ─────────────────────────────────────────────────────────────────
 \bibliographystyle{IEEEtran}
 \begin{thebibliography}{10}
+
+\bibitem{googlecluster2019}
+Google,
+``Google Cluster Data 2019,''
+Available: https://github.com/google/cluster-data/blob/master/ClusterData2019.md,
+accessed 2025.
 
 \bibitem{nayyer2022lbro}
 M.~Z. Nayyer, I.~Raza, S.~A. Hussain, M.~H. Jamal, Z.~Gillani,
@@ -714,6 +776,12 @@ S.~Hur, and I.~Ashraf,
 ``LBRO: Load balancing for resource optimization in edge computing,''
 \emph{IEEE Access}, vol.~10, pp. 36140--36151, 2022.
 DOI: 10.1109/ACCESS.2022.3206174.
+
+\bibitem{shi2016edge}
+W.~Shi, J.~Cao, Q.~Zhang, Y.~Li, and L.~Xu,
+``Edge computing: Vision and challenges,''
+\emph{IEEE Internet of Things Journal}, vol.~3, no.~5,
+pp. 637--646, 2016.
 
 \bibitem{mao2016resource}
 H.~Mao, M.~Alizadeh, I.~Menache, and S.~Kandula,
@@ -735,22 +803,11 @@ A multi-agent deep reinforcement learning approach,''
 \emph{IEEE Internet of Things Journal}, 2022.
 DOI: 10.1109/JIOT.2022.3192284.
 
-\bibitem{schulman2017ppo}
-J.~Schulman, F.~Wolski, P.~Dhariwal, A.~Radford, and O.~Klimov,
-``Proximal policy optimization algorithms,''
-\textit{arXiv preprint arXiv:1707.06347}, 2017.
-
 \bibitem{predlb2025}
 M.~Ahmed, H.~Al-Raweshidy, and A.~Alomainy,
 ``Dynamic edge load balancing with edge node activity prediction,''
 \emph{MDPI Sensors}, 2025.
 Available: https://pmc.ncbi.nlm.nih.gov/articles/PMC11902582/
-
-\bibitem{shi2016edge}
-W.~Shi, J.~Cao, Q.~Zhang, Y.~Li, and L.~Xu,
-``Edge computing: Vision and challenges,''
-\emph{IEEE Internet of Things Journal}, vol.~3, no.~5,
-pp. 637--646, 2016.
 
 \bibitem{aicdqn2026}
 F.~Al-Turjman, A.~Nawaz, and U.~Zakarya,
@@ -763,15 +820,10 @@ H.~van~Hasselt, A.~Guez, and D.~Silver,
 in \emph{Proc.\ 30th AAAI Conf.\ on Artificial Intelligence},
 Phoenix, AZ, USA, 2016, pp. 2094--2100.
 
-\bibitem{breiman2001rf}
-L.~Breiman,
-``Random forests,''
-\emph{Machine Learning}, vol.~45, no.~1, pp. 5--32, 2001.
-
-\bibitem{googlecluster2019}
-Google,
-``Google Cluster Data 2019,''
-Available: https://github.com/google/cluster-data, 2019.
+\bibitem{schulman2017ppo}
+J.~Schulman, F.~Wolski, P.~Dhariwal, A.~Radford, and O.~Klimov,
+``Proximal policy optimization algorithms,''
+\textit{arXiv preprint arXiv:1707.06347}, 2017.
 
 \end{thebibliography}
 

@@ -1,0 +1,316 @@
+% ============================================================
+%  Chapter 2 — Literature Review and Related Work
+% ============================================================
+\chapter{Literature Review and Related Work}
+\label{chap:lit}
+
+This chapter surveys the body of work most relevant to the problem
+of intelligent task scheduling in mobile edge computing environments.
+The review is organised thematically, covering edge computing
+architectures, classical and heuristic load balancing, machine
+learning-based approaches, deep reinforcement learning schedulers,
+and predictive techniques that exploit temporal patterns in resource
+utilisation. The chapter concludes by identifying the gaps that the
+present thesis addresses.
+
+% ─────────────────────────────────────────────────────────
+\section{Edge Computing Paradigms}
+\label{sec:lit_edge}
+
+The development of edge computing was driven by the inadequacies of
+centralised cloud systems in meeting the latency requirements of IoT
+applications. By moving compute resources closer to users and data
+sources, edge architectures reduce end-to-end latency and conserve
+WAN bandwidth. Three primary architectural models have emerged.
+
+\subsection{Cloudlets}
+
+The cloudlet concept was formalised by Satyanarayanan
+et al.~\cite{satyanarayanan2009case}, who characterised a cloudlet
+as a resource-rich node placed one network hop away from mobile
+users. By co-locating cloudlets with Wi-Fi access points or campus
+gateways, latency-sensitive tasks such as augmented reality and
+real-time video analysis can be processed in milliseconds rather
+than the hundreds of milliseconds typical of cloud round-trips.
+Cloudlets offer a practical middle ground between the resource
+abundance of the cloud and the proximity of on-device processing.
+
+\subsection{Fog Computing}
+
+Bonomi et al.~\cite{bonomi2012fog} introduced fog computing as a
+model that extends cloud services to the network edge. Fog
+nodes---implemented in routers, switches, and IoT gateways---aggregate,
+filter, and locally analyse data streams before forwarding selected
+results upstream. A layered arrangement lets fog gateways handle
+lightweight preprocessing while cloudlets manage more demanding
+workloads, substantially reducing WAN bandwidth consumption.
+
+\subsection{Multi-Access Edge Computing}
+
+The European Telecommunications Standards Institute (ETSI)
+standardised Multi-Access Edge Computing (MEC), placing compute
+resources at cellular and network access points~\cite{etsi2016mec}.
+MEC supports 5G applications with strict latency requirements---
+vehicular control, online gaming, and industrial automation---without
+incurring WAN round-trip delays. The ecosystem also exposes
+location-aware APIs so applications can be scheduled in proximity
+to the serving base station.
+
+% ─────────────────────────────────────────────────────────
+\section{Load Balancing Fundamentals and Strategies}
+\label{sec:lit_lb}
+
+Load balancing distributes computing tasks across available
+resources to improve throughput, latency, and utilisation. In
+edge environments, effective load management is especially
+important because cloudlets have limited capacity and demand
+patterns are highly variable.
+
+\subsection{Static Load Balancing}
+
+Static algorithms apply predetermined assignment rules without
+regard to current system state.
+
+\begin{itemize}
+  \item \textbf{Round Robin (RR):} Tasks are assigned to nodes
+  cyclically, irrespective of node capacity or current load. RR
+  is simple and imposes negligible overhead but ignores workload
+  heterogeneity.
+
+  \item \textbf{Weighted Round Robin (WRR):} Each node receives a
+  capacity-proportional weight, so more powerful nodes handle more
+  requests. WRR improves on RR for heterogeneous settings but
+  cannot adapt when runtime capacity changes.
+
+  \item \textbf{Hash-Based Methods:} Tasks are assigned by hashing
+  a request attribute such as a client identifier, achieving
+  session affinity and stateless distribution. Skewed key
+  distributions can, however, produce significant imbalance.
+\end{itemize}
+
+Static methods are predictable and easy to implement but lack the
+flexibility to react to changing workload patterns or node
+failures, making them unsuitable for dynamic edge environments.
+
+\subsection{Dynamic Load Balancing}
+
+Dynamic policies observe the system state continuously and adjust
+assignment decisions in real time.
+
+\begin{itemize}
+  \item \textbf{Least Connection (LC):} New requests go to the
+  server with the fewest active connections. LC suits long-lived
+  sessions but may be suboptimal for short-lived requests where
+  connection overhead dominates.
+
+  \item \textbf{Response-Time Based:} The scheduler tracks actual
+  server delay and directs requests to the fastest node. This
+  delivers strong per-request performance but is sensitive to
+  rapid latency fluctuations and requires continuous measurement.
+
+  \item \textbf{Resource-Based Balancing (LBRO):} The LBRO
+  framework~\cite{nayyer2022lbro} computes a Composite Resource
+  Index (CRI) for each cloudlet as a weighted sum of available
+  CPU, RAM, and queue capacity, routing tasks to the highest-CRI
+  node. LBRO outperforms round-robin on drop rate and latency
+  under moderate load, but is purely reactive---it uses only the
+  current observed state and has no mechanism to anticipate
+  congestion or learn from past decisions.
+\end{itemize}
+
+Dynamic techniques respond faster than static ones but remain
+reactive and require monitoring infrastructure. Threshold-based
+offloading policies, which trigger cloud forwarding when
+utilisation crosses a fixed limit, share the same reactiveness
+and require per-deployment manual tuning~\cite{mach2017mobile}.
+
+% ─────────────────────────────────────────────────────────
+\section{Machine Learning-Based Load Balancing}
+\label{sec:lit_ml}
+
+\subsection{Supervised Classification Approaches}
+
+Supervised learning methods have been used to incorporate task
+characteristics and historical patterns into scheduling decisions.
+Several studies trained Random Forest (RF) or gradient-boosted
+classifiers on labelled traces to predict offloading destinations,
+using features such as task size, estimated execution time, and
+current cloudlet load~\cite{wang2019task}. These classifiers
+achieve reasonable accuracy when training and deployment
+distributions match, but depend on labelled data and cannot adapt
+online as workload statistics change.
+
+\subsection{Predictive Pre-Allocation}
+
+The Pred-LB framework~\cite{predlb2025} forecasts user activity
+patterns and pre-allocates resources accordingly, reducing reactive
+overloading during demand surges. While effective for periodic or
+predictable demand, such methods are less reliable when task
+arrivals are driven by irregular events that are difficult to
+anticipate from activity logs.
+
+A shared limitation of supervised approaches is that the
+scheduling objective is defined implicitly through the labelling
+process rather than directly optimised. If the training labels
+were produced by a suboptimal policy, the learned classifier
+inherits those shortcomings. Reinforcement learning avoids this
+by directly optimising cumulative reward.
+
+% ─────────────────────────────────────────────────────────
+\section{Deep Reinforcement Learning for MEC Scheduling}
+\label{sec:lit_drl}
+
+\subsection{Value-Based Methods}
+
+The foundational DeepRM work of Mao et al.~\cite{mao2016resource}
+demonstrated that a policy gradient agent can learn job scheduling
+policies that outperform conventional heuristics on makespan
+metrics. Liu et al.~\cite{liu2022edgelb} proposed DRL-EdgeLB, a
+DQN-based scheme where the agent selects a task destination based
+on per-server queue lengths and CPU utilisation. Experiments showed
+improvements over CRI-based heuristics under high load. However,
+DRL-EdgeLB's state representation is purely reactive and includes
+no forecast of future load, limiting its ability to act
+proactively when a cloudlet is trending toward congestion.
+
+\subsection{Multi-Agent and Policy Gradient Methods}
+
+Zhao et al.~\cite{zhao2022madrl} explored MADRL-MEC, a multi-agent
+formulation in which each edge server runs its own agent
+coordinated through a shared critic. While the multi-agent approach
+can tailor policies to individual server characteristics, it
+introduces additional complexity in training stability and credit
+assignment that may be unnecessary when a centralised broker can
+observe the full system state.
+
+PPO~\cite{schulman2017ppo} has also been applied to joint
+offloading and resource allocation in MEC
+settings~\cite{chen2019optimized}. As an on-policy method, PPO
+must discard collected experience after each policy update, making
+it less sample-efficient than off-policy algorithms such as DDQN
+in simulation-based settings where environment interaction is
+inexpensive.
+
+% ─────────────────────────────────────────────────────────
+\section{Predictive Scheduling with Recurrent Neural Models}
+\label{sec:lit_lstm}
+
+\subsection{LSTM and GRU for Load Forecasting}
+
+LSTM networks~\cite{hochreiter1997lstm} address the vanishing
+gradient problem of plain recurrent networks and have been widely
+used to model server CPU and memory utilisation. Qiu et
+al.~\cite{qiu2020lstm} showed that LSTM-based predictors track
+non-stationary utilisation patterns with lower mean absolute error
+than autoregressive baselines, particularly when utilisation
+exhibits diurnal periodicities. The GRU~\cite{cho2014gru}, a
+lighter alternative using reset and update gates, achieves
+comparable accuracy on shorter sequences. Hybrid GRU-LSTM models,
+where a GRU layer extracts local temporal features and an LSTM
+layer captures longer dependencies, have shown advantages on
+server load traces where both short-term fluctuations and
+longer-horizon trends are present.
+
+\subsection{Combining Forecasting with Reinforcement Learning}
+
+Zhang et al.~\cite{zhang2021joint} proposed a joint prediction and
+offloading framework in which an LSTM forecasts channel quality and
+task arrival rates, feeding these predictions to a DQN agent.
+The approach demonstrated that augmenting the RL state with
+predicted quantities improves scheduling quality in dynamic
+wireless environments. Crucially, the agent's value function can
+exploit predictions only when they are part of the state it is
+trained on from the beginning---not when appended as a post-hoc
+feature at evaluation time.
+
+% ─────────────────────────────────────────────────────────
+\section{Comparison of Related Work}
+\label{sec:lit_comparison}
+
+Table~\ref{tab:related_summary} summarises key attributes of
+the approaches discussed and positions DRL-LSTM-LBRO relative
+to existing work.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of Edge Load Balancing and Scheduling Approaches}
+\label{tab:related_summary}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{|p{2.8cm}|p{2.5cm}|p{1.1cm}|p{1.5cm}|p{1.3cm}|p{1.3cm}|}
+\hline
+\textbf{Reference} &
+\textbf{Technique} &
+\textbf{Adaptive} &
+\textbf{Multi-Resource} &
+\textbf{Proactive} &
+\textbf{Scalable} \\
+\hline
+Static RR / WRR & Fixed rules & No & Limited & No & High \\
+\hline
+LC / Response-Time & Real-time metrics & Yes & Partial & No & Medium \\
+\hline
+LBRO \cite{nayyer2022lbro} & Weighted CRI & Yes & Yes & No & Medium \\
+\hline
+DeepRM \cite{mao2016resource} & Policy gradient & Yes & Yes & Partial & Low \\
+\hline
+DRL-EdgeLB \cite{liu2022edgelb} & DQN, reactive & Yes & Yes & No & Medium \\
+\hline
+MADRL-MEC \cite{zhao2022madrl} & Multi-agent DRL & Yes & Yes & No & Low \\
+\hline
+Pred-LB \cite{predlb2025} & Activity prediction & Yes & Partial & Yes & Medium \\
+\hline
+PPO \cite{schulman2017ppo} & Policy gradient & Yes & Yes & Partial & Medium \\
+\hline
+Zhang et al.\ \cite{zhang2021joint} & LSTM + DQN & Yes & Partial & Yes & Low \\
+\hline
+\textbf{DRL-LSTM-LBRO (ours)} & \textbf{GRU-LSTM + DDQN} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{High} \\
+\hline
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────
+\section{Research Gaps and Motivation}
+\label{sec:lit_gaps}
+
+The literature survey reveals four key gaps that the present work
+addresses.
+
+\begin{enumerate}
+
+  \item \textbf{Reactive state representations in DRL schedulers.}
+  Existing schedulers such as DRL-EdgeLB and MADRL-MEC use only
+  the current observed resource state. A cloudlet that appears
+  lightly loaded at decision time may already be trending toward
+  saturation. Incorporating near-future load predictions into the
+  RL state would allow the agent to act preventively.
+
+  \item \textbf{Isolated treatment of forecasting and scheduling.}
+  Where prediction and scheduling have been combined, forecasts are
+  produced by a separately trained model and passed to a fixed
+  heuristic. The scheduling policy is not trained with predictions
+  in its state, creating a distribution mismatch that can degrade
+  performance. An end-to-end approach that includes LSTM
+  predictions in the agent's state from the start is preferable.
+
+  \item \textbf{Single-objective or incomplete reward functions.}
+  Many DRL schedulers optimise a single metric or omit practically
+  important criteria such as load imbalance or overload penalties.
+  Incomplete rewards are susceptible to policy collapse, where the
+  agent routes all traffic to the most powerful node, degrading
+  fairness and accelerating saturation under variable load.
+
+  \item \textbf{Limited scalability analysis.}
+  Most published DRL schedulers are evaluated on a fixed small
+  number of cloudlets (typically two to four). Whether the learned
+  policy generalises as the cloudlet count grows is rarely tested,
+  despite being important for real MEC deployments.
+
+\end{enumerate}
+
+The DRL-LSTM-LBRO framework proposed in this thesis closes all
+four gaps. Per-cloudlet GRU-LSTM predictors are incorporated into
+the DDQN agent's state from the start of training. The reward
+function covers six criteria including explicit imbalance and
+overload penalties. The framework is evaluated on both
+three-cloudlet and six-cloudlet topologies to verify scalability.

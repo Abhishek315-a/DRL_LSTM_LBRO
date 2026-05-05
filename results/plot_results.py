@@ -147,6 +147,54 @@ def plot_baseline_comparison(cmp_df):
     plt.close(fig)
     print(f"  ✅ Fig 3 → {path}")
 
+def plot_baseline_separate(cmp_df):
+    metrics = [
+        ("Drop Rate (%)", "drop_rate_mean", 100, "fig3_drop_rate_comparison.png"),
+        ("Latency (s)", "avg_lat_mean", 1, "fig3_latency_comparison.png"),
+        ("Energy (J)", "avg_eng_mean", 1, "fig3_energy_comparison.png"),
+        ("Jain's Fairness Index", "jfi_mean", 1, "fig3_jfi_comparison.png"),
+    ]
+
+    for label, col, mult, filename in metrics:
+        vals = []
+        cols_ = []
+
+        for p in POLICIES:
+            row = cmp_df[cmp_df["policy"] == p]
+            vals.append(float(row[col].values[0]) * mult if len(row) else 0)
+            cols_.append(COLORS[p])
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        bars = ax.bar(range(len(POLICIES)), vals,
+                      color=cols_, edgecolor="white", linewidth=1.2)
+
+        # Value labels
+        for bar, v in zip(bars, vals):
+            ax.text(bar.get_x() + bar.get_width()/2,
+                    bar.get_height() + max(vals)*0.02,
+                    f"{v:.2f}",
+                    ha="center", va="bottom",
+                    fontsize=9, fontweight="bold")
+
+        ax.set_xticks(range(len(POLICIES)))
+        ax.set_xticklabels(POL_LABELS, rotation=30, ha="right", fontsize=8)
+        ax.set_title(label + " Comparison", fontsize=13, fontweight="bold")
+        ax.set_facecolor("#F8F9FA")
+        ax.grid(axis="y", alpha=0.3)
+
+        # Highlight DRL (first bar)
+        bars[0].set_edgecolor("#1565C0")
+        bars[0].set_linewidth(2.5)
+
+        fig.tight_layout()
+
+        path = os.path.join(OUT_DIR, filename)
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+
+        print(f"  ✅ {label} → {path}")
+
 
 def plot_jfi(cmp_df):
     """Fig 6 — Jain's Fairness Index: dedicated bar chart."""
@@ -280,6 +328,7 @@ def main():
     plot_training_convergence(train_df)
     plot_drop_rate(train_df)
     plot_baseline_comparison(compare_df)
+    plot_baseline_separate(compare_df)
     plot_action_distribution(eval_df)
     plot_latency_energy(compare_df)
     plot_jfi(compare_df)

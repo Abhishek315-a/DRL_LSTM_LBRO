@@ -1,0 +1,43 @@
+% ── Abstract ─────────────────────────────────────────────
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\thispagestyle{plain}
+
+The rapid proliferation of Internet of Things (IoT) devices has placed
+growing pressure on mobile edge computing (MEC) infrastructure, where
+edge cloudlets must handle large volumes of latency-sensitive tasks
+under tight resource constraints. Conventional load balancing methods
+that rely on fixed rules or purely reactive heuristics tend to
+struggle in such settings because they neither anticipate future
+congestion nor adapt their policies based on past experience.
+
+This thesis presents \textbf{DRL-LSTM-LBRO}, a two-stage intelligent
+task scheduling framework that addresses these limitations by combining
+short-horizon load forecasting with deep reinforcement learning-based
+placement decisions. In the first stage, a per-cloudlet GRU-LSTM
+predictor estimates near-future CPU and RAM utilisation from a sliding
+window of historical observations. These predictions are incorporated
+into the state representation seen by a Double Deep Q-Network (DDQN)
+agent, which learns a task placement policy through interaction with a
+simulated MEC environment modelled as an M/M/$c$ queuing system. The
+reward function jointly penalises task drops, deadline violations,
+end-to-end latency, energy consumption, and load imbalance, preventing
+the well-known policy-collapse behaviour where an agent routes all
+traffic to the most capable node.
+
+Simulation-based evaluation on a three-cloudlet topology using task
+workloads derived from the Google Borg cluster trace shows that
+DRL-LSTM-LBRO achieves a \textbf{0.58\%} average task drop rate and
+\textbf{0.260~s} average end-to-end latency over 500 evaluation
+episodes (ten random seeds). Compared to five published load balancing
+algorithms and a Proximal Policy Optimisation (PPO) baseline, the
+proposed framework reduces drop rates by up to 88.9\% and latency by
+up to 26.3\%. A scalability experiment extending the topology to six
+cloudlets confirms that the framework generalises without architectural
+modifications, achieving a 37.4\% drop reduction over the classical
+LBRO baseline.
+
+\vspace{0.5cm}
+\noindent\textbf{Keywords:} Mobile edge computing, load balancing,
+deep reinforcement learning, Double DQN, LSTM, IoT task scheduling,
+M/M/$c$ queuing, scalability.

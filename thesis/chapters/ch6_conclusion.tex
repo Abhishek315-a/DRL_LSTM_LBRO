@@ -1,0 +1,171 @@
+% ============================================================
+%  Chapter 6 — Conclusion and Future Work
+% ============================================================
+\chapter{Conclusion and Future Work}
+\label{chap:conclusion}
+
+This thesis proposed DRL-LSTM-LBRO, a framework that augments
+the heuristic Load Balancing with Resource Optimisation (LBRO)
+strategy with proactive GRU-LSTM load forecasting and a
+Double Deep Q-Network (DDQN) scheduling agent for adaptive
+task placement in IoT edge computing environments.
+
+% ─────────────────────────────────────────────────────────
+\section{Summary of Contributions}
+\label{sec:summary}
+
+The principal contributions of this work are as follows:
+
+\begin{enumerate}
+
+  \item \textbf{GRU-LSTM Load Predictor.}
+  A per-cloudlet GRU-LSTM model is trained to forecast
+  near-future CPU and RAM utilisation from a sliding window
+  of $L = 10$ historical observations. The two-stage
+  recurrent architecture — a GRU layer for short-term
+  dynamics followed by an LSTM layer for longer-range
+  patterns — produces accurate 1-step utilisation forecasts
+  that are incorporated into the DDQN state vector, enabling
+  the agent to act on future load trends rather than only
+  current measurements.
+
+  \item \textbf{Multi-Objective DDQN Scheduling Agent.}
+  A DDQN agent with separate online and target networks is
+  designed to select the optimal task-placement action from
+  a discrete action space covering $N$ heterogeneous
+  cloudlets and a cloud fallback. The reward function jointly
+  penalises task drops, latency, energy consumption, and load
+  imbalance, enabling the agent to balance competing
+  objectives without manual tuning of a fixed CRI formula.
+
+  \item \textbf{End-to-End Integration with LBRO.}
+  The framework extends the original LBRO heuristic by
+  replacing its static Composite Resource Index with the
+  learned DDQN policy. By retaining the LBRO-inspired
+  problem structure (finite-capacity cloudlets, M/M/$c$
+  queuing model, cloud fallback) while replacing the
+  decision rule with a data-driven agent, the framework
+  achieves strong performance without discarding the
+  domain knowledge embedded in LBRO.
+
+  \item \textbf{Empirical Evaluation on Real Workload Traces.}
+  Experiments on the Google Borg cluster trace (294,725
+  tasks) with 10 random seeds and 50 evaluation episodes
+  per seed demonstrate that DRL-LSTM-LBRO reduces task drop
+  rate by 79\% relative to LBRO (0.58\% vs.\ 2.76\%) and
+  average latency by 23.4\% (0.2603\,s vs.\ 0.3397\,s).
+  Ablation confirms an 8.5\% additional latency reduction
+  attributable to GRU-LSTM state augmentation. Scalability
+  tests on a 6-cloudlet topology show the framework
+  generalises without architectural modification.
+
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────
+\section{Limitations}
+\label{sec:limitations}
+
+Despite the encouraging results, the current work has several
+limitations that should be acknowledged:
+
+\begin{enumerate}
+
+  \item \textbf{Load Imbalance Trade-off.}
+  The DDQN policy learns to concentrate tasks on the
+  fastest cloudlets to maximise the latency and drop-rate
+  reward components. This results in a lower Jain's Fairness
+  Index (0.8762 on 3 cloudlets; 0.6759 on 6 cloudlets)
+  compared to heuristic baselines ($>$0.99). While the
+  agent's behaviour is consistent with the reward design,
+  deployments requiring strict fairness guarantees would
+  need a higher imbalance penalty coefficient or a
+  constrained RL formulation.
+
+  \item \textbf{Simulation-Only Evaluation.}
+  All experiments are conducted in a discrete-event
+  simulator. Although the workload traces originate from
+  a real Google data-centre cluster, the simulator
+  abstracts away network heterogeneity, hardware failures,
+  and operating-system scheduling variability. Real-world
+  deployment may exhibit additional noise sources.
+
+  \item \textbf{Static Topology.}
+  The current framework assumes a fixed set of cloudlets
+  known at training time. Node joins, failures, or
+  dynamic topology changes require the DDQN to be
+  retrained or fine-tuned, which may be impractical in
+  highly volatile edge environments.
+
+  \item \textbf{Single-Step Forecasting.}
+  The GRU-LSTM predictor provides a 1-step-ahead
+  utilisation forecast. Multi-step prediction could
+  allow the agent to plan further ahead during burst
+  arrivals, but increases model complexity and
+  potential compounding forecast error.
+
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────
+\section{Future Work}
+\label{sec:future}
+
+Building on the contributions and limitations above, the
+following directions are proposed for future research:
+
+\begin{enumerate}
+
+  \item \textbf{Constrained RL for Fairness.}
+  Incorporating a hard fairness constraint into the RL
+  optimisation (e.g., via Lagrangian relaxation or
+  constrained policy optimisation) would allow the agent
+  to achieve low drop rate and latency while guaranteeing
+  a minimum JFI, making the framework suitable for
+  service-level agreement (SLA)-bound deployments.
+
+  \item \textbf{Multi-Step and Probabilistic Forecasting.}
+  Extending the GRU-LSTM to produce $k$-step-ahead
+  probabilistic forecasts (e.g., with Monte Carlo dropout
+  or conformal prediction intervals) would give the agent
+  uncertainty-aware state information, enabling more robust
+  decisions during high-variance burst traffic periods.
+
+  \item \textbf{Dynamic Topology Adaptation.}
+  Applying transfer learning or meta-RL techniques to
+  allow the DDQN agent to adapt quickly to topology
+  changes (new cloudlets, node failures) without
+  full retraining would be a significant step toward
+  production-ready deployment.
+
+  \item \textbf{Real Hardware Testbed Deployment.}
+  Validating DRL-LSTM-LBRO on a physical edge testbed
+  (e.g., Raspberry Pi cluster or OpenStack-based cloudlet
+  deployment) would measure the framework's performance
+  under realistic networking delays, CPU contention, and
+  OS scheduling jitter.
+
+  \item \textbf{Federated and Privacy-Preserving Learning.}
+  In multi-operator edge environments, sharing raw
+  workload traces for centralised LSTM training may
+  violate data-privacy agreements. Federated learning
+  approaches that train the GRU-LSTM locally at each
+  cloudlet and aggregate model updates without exchanging
+  raw data represent a practical path to wider deployment.
+
+  \item \textbf{Hierarchical Scheduling.}
+  Combining a coarse-grained global DDQN agent (selecting
+  which cloudlet cluster to use) with a fine-grained
+  local agent (scheduling tasks within a cloudlet) could
+  reduce the action space at each level, accelerating
+  convergence on large-scale topologies with tens of nodes.
+
+\end{enumerate}
+
+In summary, DRL-LSTM-LBRO demonstrates that integrating
+predictive load awareness with end-to-end reinforcement
+learning is a viable and effective approach to adaptive
+load balancing in IoT edge computing. The 79\% drop rate
+reduction and 23\% latency improvement over the LBRO
+baseline confirm the value of replacing hand-crafted
+heuristics with learned, forecast-augmented policies, and
+establish a clear foundation for the future research
+directions outlined above.
